@@ -2,7 +2,7 @@
 // 1. Oturumu başlatıyoruz
 session_start();
 
-// GÜVENLİK DUVARI: Sadece adminler girebilir 
+// GÜVENLİK DUVARI: Sadece adminler girebilir
 if (!isset($_SESSION['rol']) || $_SESSION['rol'] != 'admin') {
     header("Location: index.php");
     exit();
