@@ -2,7 +2,7 @@
 $host = "localhost";
 $user = "root";
 $pass = ""; // Eğer XAMPP kurulumunda şifre belirlediysen buraya yaz
-$db   = "saglik_portali"; // Veritabanı adını yeni yapıya göre güncelledik
+$db   = "saglik_portali"; // Veritabanı adını yeni yapıya göre güncelledik YAREN ÇALMAŞUR
 
 try {
     // charset kısmını arkadaşının SQL dosyasına tam uyum için utf8mb4 olarak bıraktık
