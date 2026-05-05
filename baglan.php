@@ -1,7 +1,7 @@
 <?php
 $host = "localhost";
 $user = "root";
-$pass = ""; // Eğer XAMPP kurulumunda şifre belirlediysen buraya yaz SILA İBİŞ BURADA.
+$pass = ""; // Eğer XAMPP kurulumunda şifre belirlediysen buraya yaz
 $db   = "saglik_portali"; // Veritabanı adını yeni yapıya göre güncelledik 
 
 try {
