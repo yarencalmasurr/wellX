@@ -1,5 +1,4 @@
 
---
 -- Veritabanı: `saglik_portali`
 --
 
@@ -361,4 +360,3 @@ ALTER TABLE `uzman_basvurulari`
 ALTER TABLE `aktivite_kayitlari`
   ADD CONSTRAINT `aktivite_kayitlari_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `kullanicilar` (`id`);
 COMMIT;
-
