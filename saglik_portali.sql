@@ -1,4 +1,23 @@
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Anamakine: 127.0.0.1
+-- Üretim Zamanı: 06 May 2026, 13:09:20
+-- Sunucu sürümü: 10.4.32-MariaDB
+-- PHP Sürümü: 8.2.12
 
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
 -- Veritabanı: `saglik_portali`
 --
 
@@ -26,7 +45,8 @@ CREATE TABLE `aktivite_kayitlari` (
 --
 
 INSERT INTO `aktivite_kayitlari` (`id`, `user_id`, `alinan_kalori`, `yakilan_kalori`, `su_miktari`, `uyku_suresi`, `guncel_kilo`, `spor_suresi`, `kayit_tarihi`, `yemek_detay`) VALUES
-(47, 5, 3, 4, 3.00, 2.00, 6.00, 10, '2026-04-29', NULL);
+(47, 5, 3, 4, 3.00, 2.00, 6.00, 10, '2026-04-29', NULL),
+(49, 1, 500, 50, 0.50, 7.00, 60.00, 10, '2026-05-06', NULL);
 
 -- --------------------------------------------------------
 
@@ -49,12 +69,12 @@ CREATE TABLE `beslenme_planlari` (
 --
 
 INSERT INTO `beslenme_planlari` (`id`, `user_id`, `diyetisyen_id`, `plan_metni`, `durum_notu`, `kayit_tarihi`, `okundu`) VALUES
-(1, 1, 2, 'az ye ', NULL, '2026-04-29 07:21:27', 1),
-(2, 1, 2, 'pırasa ye çok yemişsin yeşillik artır', NULL, '2026-04-29 07:26:18', 1),
-(3, 5, 2, 'yemek ye cılız', NULL, '2026-04-29 07:35:28', 1),
-(4, 1, 2, 'az ye', NULL, '2026-04-29 08:44:11', 1),
-(5, 1, 2, '', NULL, '2026-04-29 08:44:14', 1),
-(6, 5, 2, 'pırt', NULL, '2026-04-29 10:17:48', 1);
+(1, 1, 2, 'az ye ', NULL, '2026-04-29 04:21:27', 1),
+(2, 1, 2, 'pırasa ye çok yemişsin yeşillik artır', NULL, '2026-04-29 04:26:18', 1),
+(3, 5, 2, 'yemek ye cılız', NULL, '2026-04-29 04:35:28', 1),
+(4, 1, 2, 'az ye', NULL, '2026-04-29 05:44:11', 1),
+(5, 1, 2, '', NULL, '2026-04-29 05:44:14', 1),
+(6, 5, 2, 'pırt', NULL, '2026-04-29 07:17:48', 1);
 
 -- --------------------------------------------------------
 
@@ -76,9 +96,9 @@ CREATE TABLE `egzersiz_planlari` (
 --
 
 INSERT INTO `egzersiz_planlari` (`id`, `user_id`, `hoca_id`, `antrenman_notu`, `kayit_tarihi`, `okundu`) VALUES
-(1, 1, 3, 'az yap', '2026-04-29 07:44:18', 1),
-(2, 1, 3, 'az yap', '2026-04-29 07:44:21', 1),
-(3, 5, 4, 'zort', '2026-04-29 10:18:32', 1);
+(1, 1, 3, 'az yap', '2026-04-29 04:44:18', 1),
+(2, 1, 3, 'az yap', '2026-04-29 04:44:21', 1),
+(3, 5, 4, 'zort', '2026-04-29 07:18:32', 1);
 
 -- --------------------------------------------------------
 
@@ -129,7 +149,7 @@ CREATE TABLE `gunun_tarifi` (
   `diyetisyen_id` int(11) NOT NULL,
   `tarif_baslik` varchar(255) NOT NULL,
   `tarif_icerik` text NOT NULL,
-  `ekleme_tarihi` date NOT NULL
+  `ekleme_tarihi` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -137,14 +157,8 @@ CREATE TABLE `gunun_tarifi` (
 --
 
 INSERT INTO `gunun_tarifi` (`id`, `diyetisyen_id`, `tarif_baslik`, `tarif_icerik`, `ekleme_tarihi`) VALUES
-(1, 2, 'yrrk', 'a', '0000-00-00'),
-(2, 5, 'a', 'a', '0000-00-00'),
-(3, 2, 'd', 'd', '0000-00-00'),
-(4, 5, 's', 's', '0000-00-00'),
-(5, 2, 'a', 'a', '0000-00-00'),
-(6, 2, 'yeteer', 'hbehdchjmsn\r\n', '0000-00-00'),
-(7, 2, 'a', 'a', '0000-00-00'),
-(8, 2, 'asddcdsc', 'asdeadlsjnfsdhvh\r\n', '0000-00-00');
+(1, 2, 'edeemnfdhskndd', 'dmjnjdsnjsd', '2026-05-06 10:47:44'),
+(2, 2, 'yaren', 'çalmaşur', '2026-05-06 10:51:42');
 
 -- --------------------------------------------------------
 
@@ -197,9 +211,30 @@ CREATE TABLE `kullanici_rozetleri` (
 --
 
 INSERT INTO `kullanici_rozetleri` (`id`, `user_id`, `rozet_id`, `kazanma_tarihi`) VALUES
-(1, 5, 2, '2026-04-29 11:11:42'),
-(2, 5, 1, '2026-04-29 11:20:50'),
-(3, 5, 3, '2026-04-29 11:20:50');
+(1, 5, 2, '2026-04-29 08:11:42'),
+(2, 5, 1, '2026-04-29 08:20:50'),
+(3, 5, 3, '2026-04-29 08:20:50');
+
+-- --------------------------------------------------------
+
+--
+-- Tablo için tablo yapısı `tarif_puanlari`
+--
+
+CREATE TABLE `tarif_puanlari` (
+  `id` int(11) NOT NULL,
+  `tarif_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `puan` int(1) NOT NULL,
+  `tarih` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Tablo döküm verisi `tarif_puanlari`
+--
+
+INSERT INTO `tarif_puanlari` (`id`, `tarif_id`, `user_id`, `puan`, `tarih`) VALUES
+(1, 2, 1, 5, '2026-05-06 10:58:23');
 
 -- --------------------------------------------------------
 
@@ -224,14 +259,14 @@ CREATE TABLE `uzman_basvurulari` (
 --
 
 INSERT INTO `uzman_basvurulari` (`id`, `ad_soyad`, `email`, `uzmanlik`, `tecrube`, `belge`, `rol`, `durum`, `tarih`) VALUES
-(1, 'aslihaniş', 'ascel1903@gmail.com', 'ahsasjak', 'ajkshkjahsk', '1777384816_WhatsApp Image 2026-04-27 at 18.30.04.jpeg', 'hoca', 'onaylandi', '2026-04-28 14:00:16'),
-(2, 'd', 'ascel1903@gmail.com', 'd', 'd', '', 'hoca', 'onaylandi', '2026-04-28 14:14:34'),
-(3, 'a', 'ascel1903@gmail.com', 's', 's', '', 'diyetisyen', 'reddedildi', '2026-04-28 14:17:45'),
-(4, 'a', 'ascel1903@gmail.com', 'a', 'a', '', 'diyetisyen', 'onaylandi', '2026-04-28 14:27:19'),
-(5, 'aa', 'ascel1903@gmail.com', 'a', 'a', '', 'hoca', 'onaylandi', '2026-04-28 14:27:29'),
-(6, 'serkan', 'serkan@gmail.com', 'ahsakjs', 'ajkdhakjdh', 'WhatsApp Image 2026-04-27 at 18.30.04.jpeg', 'hoca', 'reddedildi', '2026-04-29 07:36:48'),
-(7, 'd', 'deneme@gmail.com', 'd', 'd', '', 'diyetisyen', 'onaylandi', '2026-04-29 12:24:53'),
-(8, 's', 'sidarxx9@hotmail.com', 's', 's', '', 'hoca', 'onaylandi', '2026-04-29 12:25:14');
+(1, 'aslihaniş', 'ascel1903@gmail.com', 'ahsasjak', 'ajkshkjahsk', '1777384816_WhatsApp Image 2026-04-27 at 18.30.04.jpeg', 'hoca', 'onaylandi', '2026-04-28 11:00:16'),
+(2, 'd', 'ascel1903@gmail.com', 'd', 'd', '', 'hoca', 'onaylandi', '2026-04-28 11:14:34'),
+(3, 'a', 'ascel1903@gmail.com', 's', 's', '', 'diyetisyen', 'reddedildi', '2026-04-28 11:17:45'),
+(4, 'a', 'ascel1903@gmail.com', 'a', 'a', '', 'diyetisyen', 'onaylandi', '2026-04-28 11:27:19'),
+(5, 'aa', 'ascel1903@gmail.com', 'a', 'a', '', 'hoca', 'onaylandi', '2026-04-28 11:27:29'),
+(6, 'serkan', 'serkan@gmail.com', 'ahsakjs', 'ajkdhakjdh', 'WhatsApp Image 2026-04-27 at 18.30.04.jpeg', 'hoca', 'reddedildi', '2026-04-29 04:36:48'),
+(7, 'd', 'deneme@gmail.com', 'd', 'd', '', 'diyetisyen', 'onaylandi', '2026-04-29 09:24:53'),
+(8, 's', 'sidarxx9@hotmail.com', 's', 's', '', 'hoca', 'onaylandi', '2026-04-29 09:25:14');
 
 --
 -- Dökümü yapılmış tablolar için indeksler
@@ -287,6 +322,12 @@ ALTER TABLE `kullanici_rozetleri`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Tablo için indeksler `tarif_puanlari`
+--
+ALTER TABLE `tarif_puanlari`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Tablo için indeksler `uzman_basvurulari`
 --
 ALTER TABLE `uzman_basvurulari`
@@ -300,7 +341,7 @@ ALTER TABLE `uzman_basvurulari`
 -- Tablo için AUTO_INCREMENT değeri `aktivite_kayitlari`
 --
 ALTER TABLE `aktivite_kayitlari`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `beslenme_planlari`
@@ -330,7 +371,7 @@ ALTER TABLE `gunun_antrenmani`
 -- Tablo için AUTO_INCREMENT değeri `gunun_tarifi`
 --
 ALTER TABLE `gunun_tarifi`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `kullanicilar`
@@ -343,6 +384,12 @@ ALTER TABLE `kullanicilar`
 --
 ALTER TABLE `kullanici_rozetleri`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `tarif_puanlari`
+--
+ALTER TABLE `tarif_puanlari`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `uzman_basvurulari`
@@ -360,3 +407,7 @@ ALTER TABLE `uzman_basvurulari`
 ALTER TABLE `aktivite_kayitlari`
   ADD CONSTRAINT `aktivite_kayitlari_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `kullanicilar` (`id`);
 COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
