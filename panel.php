@@ -10,7 +10,17 @@ session_start();
 
 // 2. Veritabanı bağlantısını dahil et
 include 'baglan.php'; 
+$user_id = $_SESSION['user_id'];
 
+$sorgu = $conn->prepare("SELECT * FROM kullanicilar WHERE id = ?");
+$sorgu->execute([$user_id]);
+$user_data = $sorgu->fetch(PDO::FETCH_ASSOC);
+
+// Eğer kullanıcı bulunamazsa giriş sayfasına yönlendir (Güvenlik için)
+if (!$user_data) {
+    header("Location: giris.php");
+    exit();
+}
 // 3. Güvenlik Kontrolü: Kullanıcı giriş yapmamışsa veya danışan değilse index'e gönder
 if (!isset($_SESSION['user_id']) || ($_SESSION['rol'] != 'danışan' && $_SESSION['rol'] != 'danisan')) {
     header("Location: index.php"); 
@@ -134,15 +144,40 @@ $yeni_hoca = $h_uyari->fetch();
 </div>
 
 <div class="main">
+
     <?php if(!$is_premium): ?>
+
     <button type="button" class="premium-btn" data-bs-toggle="modal" data-bs-target="#premiumInfoModal">
         <i class="fas fa-crown"></i> Premium Edinin
     </button>
+
     <?php else: ?>
-    <div class="premium-btn" style="background: #10b981; cursor: default;">
-        <i class="fas fa-check-circle"></i> Premium Üye
+
+    <div class="dropdown" style="position: absolute; top: 40px; right: 40px;">
+        
+        <button class="premium-btn dropdown-toggle" 
+                type="button" 
+                data-bs-toggle="dropdown" 
+                aria-expanded="false"
+                style="background: #10b981; border:none;">
+            <i class="fas fa-check-circle"></i> Premium Üye
+        </button>
+
+        <ul class="dropdown-menu dropdown-menu-end" style="border-radius: 14px; padding: 10px; border:none; box-shadow: 0 10px 25px rgba(0,0,0,0.08);">
+            <li>
+                <a class="dropdown-item" 
+                href="premium_yonet.php"
+                onclick="return confirm('Premium üyeliğini iptal etmek istediğine emin misin?')"
+                style="color:#ef4444; font-weight:600; border-radius:10px;">
+                <i class="fas fa-times-circle"></i> Premiumu İptal Et
+                </a>
+            </li>
+        </ul>
+
     </div>
+
     <?php endif; ?>
+    
 
     <h1>Hoş Geldin, <?php echo htmlspecialchars($_SESSION['ad_soyad']); ?>! 👋</h1>
 
@@ -276,6 +311,6 @@ $yeni_hoca = $h_uyari->fetch();
     </div>
   </div>
 </div>
-
 </body>
 </html>
+
