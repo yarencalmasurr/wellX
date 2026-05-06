@@ -139,6 +139,9 @@ $yeni_hoca = $h_uyari->fetch();
     <a href="beslenme.php" class="menu-item">🥗 Beslenme</a>
     <a href="egzersiz.php" class="menu-item">🏋️ Egzersiz</a>
     <a href="gelisim.php" class="menu-item">📈 Gelişim</a>
+    <a href="rozetlerim.php" class="menu-item <?= (basename($_SERVER['PHP_SELF']) == 'rozetlerim.php') ? 'active' : '' ?>">
+        <i class="fas fa-award"></i> 🏆 Rozetlerim
+    </a>
     <a href="danisan_mesajlar.php" class="menu-item">📩 Uzman Notlarım</a>
     <a href="cikis.php" class="menu-item" style="color:#ef4444; margin-top: 40px;">🚪 Çıkış Yap</a>
 </div>
@@ -262,29 +265,40 @@ $yeni_hoca = $h_uyari->fetch();
             <?php endif; ?>
         </div>
 
-        <div style="background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04);">
-            <h3>📋 Bugünün Kayıtları</h3>
-            <?php
-            $liste = $conn->prepare("SELECT * FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ? ORDER BY id DESC");
-            $liste->execute([$user_id, $bugun]);
-            $satirlar = $liste->fetchAll();
-
-            foreach ($satirlar as $k):
-            ?>
-            <div style="padding: 15px; border-bottom: 1px solid #f1f5f9; background: #fcfcfc; border-radius: 10px; margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                    <span style="font-size: 13px; color: #64748b;">Kayıt Özeti</span>
-                    <a href="islem_v2.php?is=kayit_sil&id=<?php echo $k['id']; ?>" onclick="return confirm('Silmek istediğine emin misin?')" style="color:#ef4444; font-size:13px; text-decoration:none;">Sil</a>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 13px;">
-                    <div>🍎 <?php echo $k['alinan_kalori']; ?> kcal</div>
-                    <div>💧 <?php echo $k['su_miktari']; ?> L</div>
-                </div>
+        <div style="background: transparent; padding: 0;">
+            <div style="background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04); margin-bottom: 20px;">
+                <a href="danisan_mesajlar.php" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; background: #ffffff; color: #1e293b; border: 1px solid #e2e8f0; padding: 15px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: 0.3s; font-weight: 600;">
+                    <i class="fas fa-envelope-open-text" style="color: #3b82f6;"></i> 📩 Uzman Notlarım
+                </a>
+                <a href="rozetlerim.php" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; background: #ffffff; color: #1e293b; border: 1px solid #e2e8f0; padding: 15px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: 0.3s; font-weight: 600; margin-top: 15px;">
+                    <i class="fas fa-award" style="color: #f59e0b;"></i> 🏆 Rozetlerim
+                </a>
             </div>
-            <?php endforeach; ?>
-            <?php if(!$satirlar): ?>
-                <p style="text-align:center; color:#94a3b8;">Henüz kayıt yok.</p>
-            <?php endif; ?>
+
+            <div style="background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04);">
+                <h3>📋 Bugünün Kayıtları</h3>
+                <?php
+                $liste = $conn->prepare("SELECT * FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ? ORDER BY id DESC");
+                $liste->execute([$user_id, $bugun]);
+                $satirlar = $liste->fetchAll();
+
+                foreach ($satirlar as $k):
+                ?>
+                <div style="padding: 15px; border-bottom: 1px solid #f1f5f9; background: #fcfcfc; border-radius: 10px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <span style="font-size: 13px; color: #64748b;">Kayıt Özeti</span>
+                        <a href="islem_v2.php?is=kayit_sil&id=<?php echo $k['id']; ?>" onclick="return confirm('Silmek istediğine emin misin?')" style="color:#ef4444; font-size:13px; text-decoration:none;">Sil</a>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 13px;">
+                        <div>🍎 <?php echo $k['alinan_kalori']; ?> kcal</div>
+                        <div>💧 <?php echo $k['su_miktari']; ?> L</div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+                <?php if(!$satirlar): ?>
+                    <p style="text-align:center; color:#94a3b8;">Henüz kayıt yok.</p>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 </div>
@@ -313,4 +327,3 @@ $yeni_hoca = $h_uyari->fetch();
 </div>
 </body>
 </html>
-

@@ -1,7 +1,7 @@
 <?php
 ob_start();
 session_start();
-include 'baglan.php'; // Veritabanı bağlantı dosyanın adı
+include 'baglan.php'; // Veritabanı bağlantı dosyan
 
 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $is = $_GET['is'] ?? '';
@@ -51,17 +51,34 @@ try {
 
         $sorgu = $conn->prepare("INSERT INTO aktivite_kayitlari (user_id, alinan_kalori, yakilan_kalori, su_miktari, uyku_suresi, guncel_kilo, spor_suresi, kayit_tarihi) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $sorgu->execute([$user_id, $_POST['alinan_kalori'], $_POST['yakilan_kalori'], $_POST['su_miktari'], $_POST['uyku_suresi'], $_POST['guncel_kilo'], $_POST['spor_suresi'], $tarih]);
+        
+        // --- ROZET SİSTEMİ TETİKLEYİCİ ---
+        include_once 'rozet_fonksiyonu.php';
+        rozetKontrolEt($conn, $user_id, 'su', $_POST['su_miktari']);
+        rozetKontrolEt($conn, $user_id, 'uyku', $_POST['uyku_suresi']);
+        rozetKontrolEt($conn, $user_id, 'spor', $_POST['spor_suresi']);
+        // --- ROZET SİSTEMİ SON ---
+
         header("Location: panel.php?durum=ok");
         exit();
     }
 
     // --- 3. VERİ GÜNCELLEME VE SİLME ---
     elseif ($is == 'guncelle') {
+        if (!isset($_SESSION['user_id'])) { die("Oturum hatası!"); }
         $user_id = $_SESSION['user_id'];
         $tarih = date('Y-m-d');
         
         $sorgu = $conn->prepare("UPDATE aktivite_kayitlari SET alinan_kalori=?, yakilan_kalori=?, su_miktari=?, uyku_suresi=?, guncel_kilo=?, spor_suresi=? WHERE user_id=? AND kayit_tarihi=?");
         $sorgu->execute([$_POST['alinan_kalori'], $_POST['yakilan_kalori'], $_POST['su_miktari'], $_POST['uyku_suresi'], $_POST['guncel_kilo'], $_POST['spor_suresi'], $user_id, $tarih]);
+        
+        // --- GÜNCELLEME SONRASI ROZET KONTROLÜ ---
+        include_once 'rozet_fonksiyonu.php';
+        rozetKontrolEt($conn, $user_id, 'su', $_POST['su_miktari']);
+        rozetKontrolEt($conn, $user_id, 'uyku', $_POST['uyku_suresi']);
+        rozetKontrolEt($conn, $user_id, 'spor', $_POST['spor_suresi']);
+        // --- ROZET SİSTEMİ SON ---
+
         header("Location: panel.php?durum=guncellendi");
         exit();
     }
@@ -118,7 +135,7 @@ try {
         exit();
     }
 
-    // YENİ: Tarif Puanlama İşlemi
+    // Tarif Puanlama İşlemi
     elseif ($is == 'puan_ver') {
         if (!isset($_SESSION['user_id'])) { die("Oturum hatası!"); }
         $tarif_id = $_POST['tarif_id'];

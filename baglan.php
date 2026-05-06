@@ -4,7 +4,7 @@ $user = "root";
 $pass = ""; 
 $db   = "saglik_portali"; 
 
-// Hangi portun aktif olduğunu anlamak için küçük bir mantık kuruyoruz
+// Hangi portun aktif olduğunu ASLIamak için küçük bir mantık kuruyoruz
 // Eğer senin bilgisayarınsa 3307, değilse 3306'yı dener
 try {
     // Önce 3307'yi dene (Senin için)
