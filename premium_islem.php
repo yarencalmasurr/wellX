@@ -34,6 +34,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     // 3. Ödeme Sayfasına Yönlendir
+    $premium_yap = $conn->prepare("
+    UPDATE kullanicilar
+    SET is_premium = 1
+    WHERE id = ?
+    ");
+
+    $premium_yap->execute([$user_id]);
     header("Location: odeme_sayfasi.php?plan=" . $plan);
     exit();
 } else {
