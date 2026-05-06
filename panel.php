@@ -21,6 +21,12 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['rol'] != 'danışan' && $_SESSIO
 $user_id = $_SESSION['user_id'];
 $bugun = date('Y-m-d');
 
+// Premium Durumu Kontrolü (Veritabanında is_premium sütunu olduğunu varsayıyoruz)
+$kullanici_sorgu = $conn->prepare("SELECT is_premium FROM kullanicilar WHERE id = ?");
+$kullanici_sorgu->execute([$user_id]);
+$kullanici_veri = $kullanici_sorgu->fetch();
+$is_premium = $kullanici_veri['is_premium'] ?? 0;
+
 // --- GÜNÜN TARİFİ SORGUSU ---
 $tarif_sorgu = $conn->prepare("
     SELECT t.*, k.ad_soyad 
@@ -73,21 +79,43 @@ $yeni_hoca = $h_uyari->fetch();
     <title>Sağlık Takip | Panel</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
         :root { --blue: #0ea5e9; --orange: #f59e0b; --green: #10b981; --bg: #f8fafc; --sidebar: #ffffff; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; display: flex; color: #1e293b; }
-        .sidebar { width: 260px; background: var(--sidebar); height: 100vh; padding: 30px 20px; box-shadow: 4px 0 24px rgba(0,0,0,0.03); position: fixed; }
-        .logo { font-size: 22px; font-weight: 600; color: #0f172a; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; }
+        .sidebar { width: 260px; background: var(--sidebar); height: 100vh; padding: 30px 20px; box-shadow: 4px 0 24px rgba(0,0,0,0.03); position: fixed; z-index: 100;}
+        .logo { font-size: 22px; font-weight: 600; color: #0f172a; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; text-decoration:none; }
         .menu-item { display: flex; align-items: center; padding: 14px 18px; color: #64748b; text-decoration: none; border-radius: 12px; margin-bottom: 8px; transition: 0.2s; }
         .menu-item.active { background: #f0f9ff; color: var(--blue); font-weight: 600; }
-        .main { margin-left: 300px; padding: 40px; width: calc(100% - 300px); }
+        .main { margin-left: 260px; padding: 40px; width: calc(100% - 260px); position: relative; }
         .recipe-highlight { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0; border-radius: 24px; padding: 25px; margin-bottom: 30px; }
         .stat-card { background: white; padding: 24px; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04); border-left: 6px solid; }
         .progress-container { background: #f1f5f9; height: 10px; border-radius: 99px; overflow: hidden; margin-top: 10px; }
         .progress-bar { height: 100%; border-radius: 99px; transition: width 0.5s; }
         .btn-submit { width: 100%; padding: 16px; background: var(--blue); color: white; border: none; border-radius: 14px; font-weight: 600; cursor: pointer; }
         
-        /* Puanlama Buton Stilleri */
+        /* Premium Buton Stili */
+        .premium-btn {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.3);
+            transition: 0.3s;
+            border: none;
+        }
+        .premium-btn:hover { transform: translateY(-3px); color: white; box-shadow: 0 15px 20px -3px rgba(245, 158, 11, 0.4); }
+
         .rating-btn { background: white; border: 1px solid #ddd; padding: 8px 12px; border-radius: 10px; cursor: pointer; transition: 0.3s; font-family: inherit; }
         .rating-btn:hover { background: #f0f9ff; border-color: var(--blue); }
         .rating-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
@@ -96,7 +124,7 @@ $yeni_hoca = $h_uyari->fetch();
 <body>
 
 <div class="sidebar">
-    <div class="logo">🩺 Sağlık Takip</div>
+    <a href="panel.php" class="logo">🩺 Sağlık Takip</a>
     <a href="panel.php" class="menu-item active">🏠 Özet Paneli</a>
     <a href="beslenme.php" class="menu-item">🥗 Beslenme</a>
     <a href="egzersiz.php" class="menu-item">🏋️ Egzersiz</a>
@@ -106,9 +134,18 @@ $yeni_hoca = $h_uyari->fetch();
 </div>
 
 <div class="main">
+    <?php if(!$is_premium): ?>
+    <button type="button" class="premium-btn" data-bs-toggle="modal" data-bs-target="#premiumInfoModal">
+        <i class="fas fa-crown"></i> Premium Edinin
+    </button>
+    <?php else: ?>
+    <div class="premium-btn" style="background: #10b981; cursor: default;">
+        <i class="fas fa-check-circle"></i> Premium Üye
+    </div>
+    <?php endif; ?>
+
     <h1>Hoş Geldin, <?php echo htmlspecialchars($_SESSION['ad_soyad']); ?>! 👋</h1>
 
-    <!-- GÜNÜN TARİFİ KARTI + PUANLAMA -->
     <?php if ($gunun_tarifi): ?>
         <div class="recipe-highlight">
             <h3 style="color: #166534; margin: 0;"><i class="fas fa-utensils"></i> Günün Sağlıklı Tarifi</h3>
@@ -117,7 +154,6 @@ $yeni_hoca = $h_uyari->fetch();
             <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                 <small style="color: #15803d; font-weight: 600;">👨‍⚕️ Diyetisyen: <?php echo htmlspecialchars($gunun_tarifi['ad_soyad']); ?></small>
                 
-                <!-- Puanlama Alanı -->
                 <div style="text-align: right;">
                     <p style="font-size: 12px; font-weight: 600; margin-bottom: 5px; color: #166534;">Bu tarife puan ver:</p>
                     <form action="islem_v2.php?is=puan_ver" method="POST" style="display: flex; gap: 5px;">
@@ -134,7 +170,6 @@ $yeni_hoca = $h_uyari->fetch();
         </div>
     <?php endif; ?>
 
-    <!-- BİLDİRİMLER -->
     <?php if ($yeni_diyet || $yeni_hoca || isset($_GET['puan'])): ?>
         <div style="background:#fff9db; border-color:#fab005; padding: 15px; border-radius: 16px; margin-bottom: 20px; border: 1px solid;">
             <?php if(isset($_GET['puan'])): ?>
@@ -145,7 +180,6 @@ $yeni_hoca = $h_uyari->fetch();
         </div>
     <?php endif; ?>
 
-    <!-- İstatistik Kartları -->
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 40px;">
         <div class="stat-card" style="border-color: var(--blue);">
             <div style="font-size: 14px; color: #64748b;">💧 Su</div>
@@ -170,9 +204,7 @@ $yeni_hoca = $h_uyari->fetch();
         </div>
     </div>
 
-    <!-- Veri Girişi ve Kayıtlar Grid -->
     <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 30px;">
-        <!-- Form Alanı -->
         <div style="background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04);">
             <h3>➕ Bugünün Verilerini Gir</h3>
             <?php if ($mevcut_kayit): ?>
@@ -195,7 +227,6 @@ $yeni_hoca = $h_uyari->fetch();
             <?php endif; ?>
         </div>
 
-        <!-- Kayıt Listesi -->
         <div style="background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04);">
             <h3>📋 Bugünün Kayıtları</h3>
             <?php
@@ -222,5 +253,29 @@ $yeni_hoca = $h_uyari->fetch();
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="premiumInfoModal" tabindex="-1" aria-labelledby="premiumInfoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 30px; border: none; overflow: hidden;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; padding: 25px;">
+        <h5 class="modal-title" id="premiumInfoModalLabel"><i class="fas fa-crown"></i> Neden Premium?</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="padding: 30px;">
+        <ul class="list-unstyled">
+            <li class="mb-3"><i class="fas fa-check-circle text-warning"></i> <b>Kişisel Uzman Desteği:</b> Diyetisyen ve Spor hocanızla birebir iletişim kurun.</li>
+            <li class="mb-3"><i class="fas fa-check-circle text-warning"></i> <b>Özel Planlar:</b> Size özel hazırlanmış haftalık yemek ve egzersiz listeleri.</li>
+            <li class="mb-3"><i class="fas fa-check-circle text-warning"></i> <b>Detaylı Analiz:</b> Gelişim grafiklerinizi aylık ve yıllık bazda görüntüleyin.</li>
+            <li class="mb-3"><i class="fas fa-check-circle text-warning"></i> <b>Öncelikli Erişim:</b> Yeni tarifler ve özelliklerden ilk siz haberdar olun.</li>
+        </ul>
+        <hr>
+        <div class="text-center mt-4">
+            <a href="premium_planlar.php" class="btn btn-warning w-100" style="padding: 15px; border-radius: 15px; font-weight: 600; font-size: 18px;">Planları Gör ve Devam Et</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
