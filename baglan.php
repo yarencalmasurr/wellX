@@ -1,19 +1,22 @@
 <?php
-$host = "127.0.0.1"; // localhost yerine IP kullanarak port çakışmasını önledik
-$port = "3307";      // XAMPP panelinde gördüğün aktif portu buraya tanımladık
+$host = "127.0.0.1";
 $user = "root";
 $pass = ""; 
 $db   = "saglik_portali"; 
 
+// Hangi portun aktif olduğunu anlamak için küçük bir mantık kuruyoruz
+// Eğer senin bilgisayarınsa 3307, değilse 3306'yı dener
 try {
-    // Bağlantı satırına port bilgisini (port=$port) ekledik
-    $conn = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4", $user, $pass);
-    
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
-    // Test etmek istersen aşağıdaki satırı aktif edebilirsin
-    // echo "Bağlantı başarılı!"; 
+    // Önce 3307'yi dene (Senin için)
+    $conn = new PDO("mysql:host=$host;port=3307;dbname=$db;charset=utf8mb4", $user, $pass);
 } catch (PDOException $e) {
-    die("Bağlantı başarısız: " . $e->getMessage());
+    try {
+        // Eğer 3307 başarısız olursa 3306'yı dene (Arkadaşların için)
+        $conn = new PDO("mysql:host=$host;port=3306;dbname=$db;charset=utf8mb4", $user, $pass);
+    } catch (PDOException $e2) {
+        die("Bağlantı başarısız: " . $e2->getMessage());
+    }
 }
+
+$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 ?>
