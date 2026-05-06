@@ -1,20 +1,19 @@
 <?php
-$host = "localhost";
+$host = "127.0.0.1"; // localhost yerine IP kullanarak port çakışmasını önledik
+$port = "3307";      // XAMPP panelinde gördüğün aktif portu buraya tanımladık
 $user = "root";
-$pass = ""; // Eğer XAMPP kurulumunda şifre belirlediysen buraya yaz
-$db   = "saglik_portali"; // Veritabanı adını yeni yapıya göre güncelledik 
+$pass = ""; 
+$db   = "saglik_portali"; 
 
 try {
-    // charset kısmını arkadaşının SQL dosyasına tam uyum için utf8mb4 olarak bıraktık
-    $conn = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass);
+    // Bağlantı satırına port bilgisini (port=$port) ekledik
+    $conn = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4", $user, $pass);
     
-    // Hataları ekranda görebilmek için hata modunu aktif ediyoruz
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    // Bağlantının başarılı olduğunu test etmek istersen aşağıdaki satırı yorumdan çıkarabilirsin
+    // Test etmek istersen aşağıdaki satırı aktif edebilirsin
     // echo "Bağlantı başarılı!"; 
 } catch (PDOException $e) {
-    // Bağlantı hatası olursa burası çalışır
     die("Bağlantı başarısız: " . $e->getMessage());
 }
 ?>
