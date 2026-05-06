@@ -1,12 +1,13 @@
 <?php
 ob_start();
 session_start();
-include 'baglan.php';
+include 'baglan.php'; // Veritabanı bağlantı dosyanın adı
 
 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $is = $_GET['is'] ?? '';
 
 try {
+    // --- 1. GİRİŞ SİSTEMİ ---
     if ($is == 'login') {
         $kadi  = trim($_POST['kullanici'] ?? '');
         $sifre = trim($_POST['sifre']     ?? '');
@@ -21,6 +22,7 @@ try {
             $rol = mb_strtolower(trim($user['rol']), 'UTF-8');
             $_SESSION['rol'] = $rol;
 
+            // Rol bazlı yönlendirme
             if ($rol == 'admin') header("Location: basvuru_yonetim.php");
             elseif ($rol == 'diyetisyen') header("Location: diyetisyen_paneli.php");
             elseif ($rol == 'hoca') header("Location: hoca_paneli.php");
@@ -32,12 +34,14 @@ try {
         }
     }
 
+    // --- 2. DANIŞAN GÜNLÜK VERİ KAYDI ---
     elseif ($is == 'verileri_kaydet') {
         if (!isset($_SESSION['user_id'])) { die("Oturum hatası!"); }
         
         $user_id = $_SESSION['user_id'];
         $tarih   = date('Y-m-d');
         
+        // Mükerrer kayıt kontrolü
         $chk = $conn->prepare("SELECT id FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
         $chk->execute([$user_id, $tarih]);
         if($chk->fetch()) {
@@ -51,6 +55,7 @@ try {
         exit();
     }
 
+    // --- 3. VERİ GÜNCELLEME VE SİLME ---
     elseif ($is == 'guncelle') {
         $user_id = $_SESSION['user_id'];
         $tarih = date('Y-m-d');
@@ -67,6 +72,7 @@ try {
         exit();
     }
 
+    // --- 4. UZMAN VE DANIŞAN ETKİLEŞİMİ (MESAJ/PLAN) ---
     elseif ($is == 'mesaj_oku') {
         $tablo = ($_GET['tip'] == 'diyet') ? 'beslenme_planlari' : 'egzersiz_planlari';
         $conn->prepare("UPDATE $tablo SET okundu = 1 WHERE user_id = ?")->execute([$_SESSION['user_id']]);
@@ -80,6 +86,7 @@ try {
         header("Location: diyetisyen_paneli.php?durum=mesaj_gonderildi");
         exit();
     }
+
     elseif ($is == 'egzersiz_yaz') {
         $conn->prepare("INSERT INTO egzersiz_planlari (user_id, hoca_id, antrenman_notu, okundu) VALUES (?, ?, ?, 0)")
               ->execute([$_POST['danisan_id'], $_SESSION['user_id'], $_POST['antrenman_notu']]);
@@ -87,26 +94,51 @@ try {
         exit();
     }
 
-    // TARİFİ HEM KAYDET HEM TÜM DANIŞANLARA MESAJ AT
+    // --- 5. GÜNÜN TARİFİ, ANTRENMAN DUYURUSU VE PUANLAMA ---
     elseif ($is == 'tarif_kaydet') {
         $diyetisyen_id = $_SESSION['user_id'];
         $baslik = $_POST['tarif_baslik'];
         $icerik = $_POST['tarif_icerik'];
         
+        // Tabloya kaydet
         $conn->prepare("INSERT INTO gunun_tarifi (diyetisyen_id, tarif_baslik, tarif_icerik) VALUES (?, ?, ?)")
               ->execute([$diyetisyen_id, $baslik, $icerik]);
         
+        // Tüm bağlı danışanlara mesaj olarak at
         $danisanlar = $conn->prepare("SELECT id FROM kullanicilar WHERE diyetisyen_id = ?");
         $danisanlar->execute([$diyetisyen_id]);
         $liste = $danisanlar->fetchAll(PDO::FETCH_COLUMN);
         
         $mesaj = "🥗 YENİ TARİF: " . $baslik . "\n\n" . $icerik;
-        
         foreach ($liste as $danisan_id) {
             $conn->prepare("INSERT INTO beslenme_planlari (user_id, diyetisyen_id, plan_metni, okundu) VALUES (?, ?, ?, 0)")
                   ->execute([$danisan_id, $diyetisyen_id, $mesaj]);
         }
         header("Location: diyetisyen_paneli.php?durum=tarif_ok");
+        exit();
+    }
+
+    // YENİ: Tarif Puanlama İşlemi
+    elseif ($is == 'puan_ver') {
+        if (!isset($_SESSION['user_id'])) { die("Oturum hatası!"); }
+        $tarif_id = $_POST['tarif_id'];
+        $user_id  = $_SESSION['user_id'];
+        $puan     = $_POST['puan'];
+
+        // Daha önce puan verilmiş mi kontrol et
+        $kontrol = $conn->prepare("SELECT id FROM tarif_puanlari WHERE tarif_id = ? AND user_id = ?");
+        $kontrol->execute([$tarif_id, $user_id]);
+        
+        if ($kontrol->fetch()) {
+            // Varsa güncelle
+            $sorgu = $conn->prepare("UPDATE tarif_puanlari SET puan = ? WHERE tarif_id = ? AND user_id = ?");
+            $sorgu->execute([$puan, $tarif_id, $user_id]);
+        } else {
+            // Yoksa yeni kayıt oluştur
+            $sorgu = $conn->prepare("INSERT INTO tarif_puanlari (tarif_id, user_id, puan) VALUES (?, ?, ?)");
+            $sorgu->execute([$tarif_id, $user_id, $puan]);
+        }
+        header("Location: panel.php?puan=ok");
         exit();
     }
     
@@ -117,6 +149,7 @@ try {
         exit();
     }
 
+    // --- 6. ADMİN ONAY/RED SİSTEMİ ---
     elseif ($is == 'onayla') {
         $conn->prepare("UPDATE uzman_basvurulari SET durum = 'onaylandi' WHERE id = ?")->execute([$_GET['id']]);
         header("Location: basvuru_yonetim.php?durum=onaylandi");
@@ -128,6 +161,8 @@ try {
         exit();
     }
 
-} catch (PDOException $e) { die("Hata: " . $e->getMessage()); }
+} catch (PDOException $e) { 
+    die("Sistem Hatası: " . $e->getMessage()); 
+}
 ob_end_flush();
 ?>
