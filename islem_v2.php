@@ -1,7 +1,7 @@
 <?php
 ob_start();
 session_start();
-include 'baglan.php'; // Veritabanı bağlantı dosyan
+include 'baglan.php'; 
 
 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $is = $_GET['is'] ?? '';
@@ -22,7 +22,6 @@ try {
             $rol = mb_strtolower(trim($user['rol']), 'UTF-8');
             $_SESSION['rol'] = $rol;
 
-            // Rol bazlı yönlendirme
             if ($rol == 'admin') header("Location: basvuru_yonetim.php");
             elseif ($rol == 'diyetisyen') header("Location: diyetisyen_paneli.php");
             elseif ($rol == 'hoca') header("Location: hoca_paneli.php");
@@ -41,7 +40,6 @@ try {
         $user_id = $_SESSION['user_id'];
         $tarih   = date('Y-m-d');
         
-        // Mükerrer kayıt kontrolü
         $chk = $conn->prepare("SELECT id FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
         $chk->execute([$user_id, $tarih]);
         if($chk->fetch()) {
@@ -52,14 +50,25 @@ try {
         $sorgu = $conn->prepare("INSERT INTO aktivite_kayitlari (user_id, alinan_kalori, yakilan_kalori, su_miktari, uyku_suresi, guncel_kilo, spor_suresi, kayit_tarihi) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $sorgu->execute([$user_id, $_POST['alinan_kalori'], $_POST['yakilan_kalori'], $_POST['su_miktari'], $_POST['uyku_suresi'], $_POST['guncel_kilo'], $_POST['spor_suresi'], $tarih]);
         
-        // --- ROZET SİSTEMİ TETİKLEYİCİ ---
+        // --- ROZET SİSTEMİ TETİKLEYİCİ (DÜZELTİLDİ) ---
         include_once 'rozet_fonksiyonu.php';
-        rozetKontrolEt($conn, $user_id, 'su', $_POST['su_miktari']);
-        rozetKontrolEt($conn, $user_id, 'uyku', $_POST['uyku_suresi']);
-        rozetKontrolEt($conn, $user_id, 'spor', $_POST['spor_suresi']);
-        // --- ROZET SİSTEMİ SON ---
+        $yeni_rozet = null;
 
-        header("Location: panel.php?durum=ok");
+        // Her kategori için kontrol et ve kazanılan en son rozeti yakala
+        $r1 = rozetKontrolEt($conn, $user_id, 'su', $_POST['su_miktari']);
+        $r2 = rozetKontrolEt($conn, $user_id, 'uyku', $_POST['uyku_suresi']);
+        $r3 = rozetKontrolEt($conn, $user_id, 'spor', $_POST['spor_suresi']);
+
+        if ($r1) $yeni_rozet = $r1;
+        if ($r2) $yeni_rozet = $r2;
+        if ($r3) $yeni_rozet = $r3;
+
+        // Eğer bir rozet kazanıldıysa URL'ye ekle
+        if ($yeni_rozet) {
+            header("Location: panel.php?durum=ok&yeni_rozet=" . urlencode($yeni_rozet));
+        } else {
+            header("Location: panel.php?durum=ok");
+        }
         exit();
     }
 
@@ -72,14 +81,21 @@ try {
         $sorgu = $conn->prepare("UPDATE aktivite_kayitlari SET alinan_kalori=?, yakilan_kalori=?, su_miktari=?, uyku_suresi=?, guncel_kilo=?, spor_suresi=? WHERE user_id=? AND kayit_tarihi=?");
         $sorgu->execute([$_POST['alinan_kalori'], $_POST['yakilan_kalori'], $_POST['su_miktari'], $_POST['uyku_suresi'], $_POST['guncel_kilo'], $_POST['spor_suresi'], $user_id, $tarih]);
         
-        // --- GÜNCELLEME SONRASI ROZET KONTROLÜ ---
         include_once 'rozet_fonksiyonu.php';
-        rozetKontrolEt($conn, $user_id, 'su', $_POST['su_miktari']);
-        rozetKontrolEt($conn, $user_id, 'uyku', $_POST['uyku_suresi']);
-        rozetKontrolEt($conn, $user_id, 'spor', $_POST['spor_suresi']);
-        // --- ROZET SİSTEMİ SON ---
+        $yeni_rozet = null;
+        $r1 = rozetKontrolEt($conn, $user_id, 'su', $_POST['su_miktari']);
+        $r2 = rozetKontrolEt($conn, $user_id, 'uyku', $_POST['uyku_suresi']);
+        $r3 = rozetKontrolEt($conn, $user_id, 'spor', $_POST['spor_suresi']);
 
-        header("Location: panel.php?durum=guncellendi");
+        if ($r1) $yeni_rozet = $r1;
+        if ($r2) $yeni_rozet = $r2;
+        if ($r3) $yeni_rozet = $r3;
+
+        if ($yeni_rozet) {
+            header("Location: panel.php?durum=guncellendi&yeni_rozet=" . urlencode($yeni_rozet));
+        } else {
+            header("Location: panel.php?durum=guncellendi");
+        }
         exit();
     }
 
@@ -89,7 +105,7 @@ try {
         exit();
     }
 
-    // --- 4. UZMAN VE DANIŞAN ETKİLEŞİMİ (MESAJ/PLAN) ---
+    // --- 4, 5 ve 6. Bölümler (Duyurular, Admin vs.) aynı kalıyor...
     elseif ($is == 'mesaj_oku') {
         $tablo = ($_GET['tip'] == 'diyet') ? 'beslenme_planlari' : 'egzersiz_planlari';
         $conn->prepare("UPDATE $tablo SET okundu = 1 WHERE user_id = ?")->execute([$_SESSION['user_id']]);
@@ -111,17 +127,14 @@ try {
         exit();
     }
 
-    // --- 5. GÜNÜN TARİFİ, ANTRENMAN DUYURUSU VE PUANLAMA ---
     elseif ($is == 'tarif_kaydet') {
         $diyetisyen_id = $_SESSION['user_id'];
         $baslik = $_POST['tarif_baslik'];
         $icerik = $_POST['tarif_icerik'];
         
-        // Tabloya kaydet
         $conn->prepare("INSERT INTO gunun_tarifi (diyetisyen_id, tarif_baslik, tarif_icerik) VALUES (?, ?, ?)")
               ->execute([$diyetisyen_id, $baslik, $icerik]);
         
-        // Tüm bağlı danışanlara mesaj olarak at
         $danisanlar = $conn->prepare("SELECT id FROM kullanicilar WHERE diyetisyen_id = ?");
         $danisanlar->execute([$diyetisyen_id]);
         $liste = $danisanlar->fetchAll(PDO::FETCH_COLUMN);
@@ -135,25 +148,21 @@ try {
         exit();
     }
 
-    // Tarif Puanlama İşlemi
     elseif ($is == 'puan_ver') {
         if (!isset($_SESSION['user_id'])) { die("Oturum hatası!"); }
         $tarif_id = $_POST['tarif_id'];
         $user_id  = $_SESSION['user_id'];
         $puan     = $_POST['puan'];
 
-        // Daha önce puan verilmiş mi kontrol et
         $kontrol = $conn->prepare("SELECT id FROM tarif_puanlari WHERE tarif_id = ? AND user_id = ?");
         $kontrol->execute([$tarif_id, $user_id]);
         
         if ($kontrol->fetch()) {
-            // Varsa güncelle
             $sorgu = $conn->prepare("UPDATE tarif_puanlari SET puan = ? WHERE tarif_id = ? AND user_id = ?");
             $sorgu->execute([$puan, $tarif_id, $user_id]);
         } else {
-            // Yoksa yeni kayıt oluştur
             $sorgu = $conn->prepare("INSERT INTO tarif_puanlari (tarif_id, user_id, puan) VALUES (?, ?, ?)");
-            $sorgu->execute([$tarif_id, $user_id, $puan]);
+            $sorgu->execute([$puan, $tarif_id, $user_id]);
         }
         header("Location: panel.php?puan=ok");
         exit();
@@ -166,7 +175,6 @@ try {
         exit();
     }
 
-    // --- 6. ADMİN ONAY/RED SİSTEMİ ---
     elseif ($is == 'onayla') {
         $conn->prepare("UPDATE uzman_basvurulari SET durum = 'onaylandi' WHERE id = ?")->execute([$_GET['id']]);
         header("Location: basvuru_yonetim.php?durum=onaylandi");
