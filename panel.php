@@ -2,41 +2,44 @@
 /**
  * Proje: saglik_portali
  * Dosya: panel.php
- * Açıklama: Danışanların günlük veri girişi ve takip paneli
+ * Açıklama: Danışanların ana yönetim paneli - Tüm özellikler dahil.
  */
 
-// 1. Oturumu başlat
 session_start(); 
-
-// 2. Veritabanı bağlantısını dahil et
 include 'baglan.php'; 
+
+// Oturum kontrolü
+if (!isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit();
+}
+
 $user_id = $_SESSION['user_id'];
 
+// Kullanıcı Verilerini Çek
 $sorgu = $conn->prepare("SELECT * FROM kullanicilar WHERE id = ?");
 $sorgu->execute([$user_id]);
 $user_data = $sorgu->fetch(PDO::FETCH_ASSOC);
 
-// Eğer kullanıcı bulunamazsa giriş sayfasına yönlendir (Güvenlik için)
-if (!$user_data) {
-    header("Location: giris.php");
-    exit();
-}
-// 3. Güvenlik Kontrolü: Kullanıcı giriş yapmamışsa veya danışan değilse index'e gönder
-if (!isset($_SESSION['user_id']) || ($_SESSION['rol'] != 'danışan' && $_SESSION['rol'] != 'danisan')) {
+// Güvenlik: Danışan değilse erişimi engelle
+if (!$user_data || ($_SESSION['rol'] != 'danışan' && $_SESSION['rol'] != 'danisan')) {
     header("Location: index.php"); 
     exit();
 }
 
-// Kullanıcı bilgilerini ve tarih bilgisini al
-$user_id = $_SESSION['user_id'];
 $bugun = date('Y-m-d');
+$is_premium = $user_data['is_premium'] ?? 0;
 
-// Premium Durumu Kontrolü (Veritabanında is_premium sütunu olduğunu varsayıyoruz)
-$kullanici_sorgu = $conn->prepare("SELECT is_premium FROM kullanicilar WHERE id = ?");
-$kullanici_sorgu->execute([$user_id]);
-$kullanici_veri = $kullanici_sorgu->fetch();
-$is_premium = $kullanici_veri['is_premium'] ?? 0;
+// --- UZMAN EŞLEŞME KONTROLLERİ ---
+$diy_kontrol = $conn->prepare("SELECT uzman_id FROM uzman_danisan_eslesmeleri WHERE danisan_id = ? AND uzman_rol = 'diyetisyen'");
+$diy_kontrol->execute([$user_id]);
+$has_diyetisyen = $diy_kontrol->fetch();
 
+$hoca_kontrol = $conn->prepare("SELECT uzman_id FROM uzman_danisan_eslesmeleri WHERE danisan_id = ? AND uzman_rol = 'hoca'");
+$hoca_kontrol->execute([$user_id]);
+$has_hoca = $hoca_kontrol->fetch();
+
+// --- GÜNÜN TARİFİ (24 Saatlik) ---
 $tarif_sorgu = $conn->prepare("
     SELECT t.*, k.ad_soyad 
     FROM gunun_tarifi t 
@@ -47,37 +50,34 @@ $tarif_sorgu = $conn->prepare("
 $tarif_sorgu->execute();
 $gunun_tarifi = $tarif_sorgu->fetch(PDO::FETCH_ASSOC);
 
-// --- YENİ: DANIŞANIN BU TARİFE VERDİĞİ PUANI ÇEK ---
+// Tarife Verilen Puan
 $mevcut_puan = 0;
 if ($gunun_tarifi) {
     $puan_cek = $conn->prepare("SELECT puan FROM tarif_puanlari WHERE tarif_id = ? AND user_id = ?");
     $puan_cek->execute([$gunun_tarifi['id'], $user_id]);
     $puan_veri = $puan_cek->fetch();
-    if ($puan_veri) {
-        $mevcut_puan = $puan_veri['puan'];
-    }
+    $mevcut_puan = $puan_veri['puan'] ?? 0;
 }
 
-// --- GÜNLÜK KAYIT SINIRI KONTROLÜ ---
+// --- İSTATİSTİKLER VE KAYIT KONTROLÜ ---
 $kontrol = $conn->prepare("SELECT id FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
 $kontrol->execute([$user_id, $bugun]);
 $mevcut_kayit = $kontrol->fetch();
 
-// İstatistikleri çek (Bugünün verileri)
-$sorgu = $conn->prepare("SELECT SUM(su_miktari) as t_su, SUM(alinan_kalori) as t_alinan, SUM(uyku_suresi) as t_uyku FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
-$sorgu->execute([$user_id, $bugun]);
-$veri = $sorgu->fetch(PDO::FETCH_ASSOC);
+$stat_sorgu = $conn->prepare("SELECT SUM(su_miktari) as t_su, SUM(alinan_kalori) as t_alinan, SUM(uyku_suresi) as t_uyku FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
+$stat_sorgu->execute([$user_id, $bugun]);
+$veri = $stat_sorgu->fetch(PDO::FETCH_ASSOC);
 
 $su = $veri['t_su'] ?? 0;
 $alinan = $veri['t_alinan'] ?? 0;
 $uyku = $veri['t_uyku'] ?? 0;
 
-// Bildirimleri kontrol et
-$d_uyari = $conn->prepare("SELECT id FROM beslenme_planlari WHERE user_id = ? AND okundu = 0 LIMIT 1");
+// Bildirimler (Bugün gelen notlar)
+$d_uyari = $conn->prepare("SELECT id FROM beslenme_planlari WHERE user_id = ? AND okundu = 0 AND DATE(kayit_tarihi) = CURDATE() LIMIT 1");
 $d_uyari->execute([$user_id]);
 $yeni_diyet = $d_uyari->fetch();
 
-$h_uyari = $conn->prepare("SELECT id FROM egzersiz_planlari WHERE user_id = ? AND okundu = 0 LIMIT 1");
+$h_uyari = $conn->prepare("SELECT id FROM egzersiz_planlari WHERE user_id = ? AND okundu = 0 AND DATE(kayit_tarihi) = CURDATE() LIMIT 1");
 $h_uyari->execute([$user_id]);
 $yeni_hoca = $h_uyari->fetch();
 ?>
@@ -95,126 +95,88 @@ $yeni_hoca = $h_uyari->fetch();
     <style>
         :root { --blue: #0ea5e9; --orange: #f59e0b; --green: #10b981; --bg: #f8fafc; --sidebar: #ffffff; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; display: flex; color: #1e293b; }
+        
         .sidebar { width: 260px; background: var(--sidebar); height: 100vh; padding: 30px 20px; box-shadow: 4px 0 24px rgba(0,0,0,0.03); position: fixed; z-index: 100;}
         .logo { font-size: 22px; font-weight: 600; color: #0f172a; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; text-decoration:none; }
-        .menu-item { display: flex; align-items: center; padding: 14px 18px; color: #64748b; text-decoration: none; border-radius: 12px; margin-bottom: 8px; transition: 0.2s; }
-        .menu-item.active { background: #f0f9ff; color: var(--blue); font-weight: 600; }
-        .main { margin-left: 260px; padding: 40px; width: calc(100% - 260px); position: relative; }
-        .recipe-highlight { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0; border-radius: 24px; padding: 25px; margin-bottom: 30px; }
-        .stat-card { background: white; padding: 24px; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04); border-left: 6px solid; }
-        .progress-container { background: #f1f5f9; height: 10px; border-radius: 99px; overflow: hidden; margin-top: 10px; }
-        .progress-bar { height: 100%; border-radius: 99px; transition: width 0.5s; }
-        .btn-submit { width: 100%; padding: 16px; background: var(--blue); color: white; border: none; border-radius: 14px; font-weight: 600; cursor: pointer; }
         
-        /* Premium Buton Stili */
-        .premium-btn {
-            position: absolute;
-            top: 40px;
-            right: 40px;
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 14px;
-            font-weight: 600;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.3);
-            transition: 0.3s;
-            border: none;
-        }
-        .premium-btn:hover { transform: translateY(-3px); color: white; box-shadow: 0 15px 20px -3px rgba(245, 158, 11, 0.4); }
-
-        .rating-btn { background: white; border: 1px solid #ddd; padding: 8px 12px; border-radius: 10px; cursor: pointer; transition: 0.3s; font-family: inherit; }
-        .rating-btn:hover { background: #f0f9ff; border-color: var(--blue); }
-        .rating-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
+        .menu-item { display: flex; align-items: center; padding: 14px 18px; color: #64748b; text-decoration: none; border-radius: 12px; margin-bottom: 8px; transition: 0.2s; }
+        .menu-item:hover { background: #f8fafc; color: #0f172a; }
+        .menu-item.active { background: #f0f9ff; color: var(--blue); font-weight: 600; }
+        
+        .main { margin-left: 260px; padding: 40px; width: calc(100% - 260px); position: relative; }
+        .stat-card { background: white; padding: 24px; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04); border-left: 6px solid; }
+        .recipe-highlight { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0; border-radius: 24px; padding: 25px; margin-bottom: 30px; }
+        .premium-btn { position: absolute; top: 40px; right: 40px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 12px 24px; border-radius: 14px; font-weight: 600; text-decoration: none; border: none; }
+        .uzman-alert { padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <a href="panel.php" class="logo">🩺 Sağlık Takip</a>
-    <a href="panel.php" class="menu-item active">🏠 Özet Paneli</a>
-    <a href="beslenme.php" class="menu-item">🥗 Beslenme</a>
-    <a href="egzersiz.php" class="menu-item">🏋️ Egzersiz</a>
-    <a href="gelisim.php" class="menu-item">📈 Gelişim</a>
-    <a href="rozetlerim.php" class="menu-item <?= (basename($_SERVER['PHP_SELF']) == 'rozetlerim.php') ? 'active' : '' ?>">
-        <i class="fas fa-award"></i> 🏆 Rozetlerim
-    </a>
-    <a href="danisan_mesajlar.php" class="menu-item">📩 Uzman Notlarım</a>
+    
+    <?php 
+        $current_page = basename($_SERVER['PHP_SELF']); 
+        function isActive($page, $current) { return ($page == $current) ? 'active' : ''; }
+    ?>
+
+    <a href="panel.php" class="menu-item <?php echo isActive('panel.php', $current_page); ?>">🏠 Özet Paneli</a>
+    <a href="beslenme.php" class="menu-item <?php echo isActive('beslenme.php', $current_page); ?>">🥗 Beslenme</a>
+    <a href="egzersiz.php" class="menu-item <?php echo isActive('egzersiz.php', $current_page); ?>">🏋️ Egzersiz</a>
+    <a href="gelisim.php" class="menu-item <?php echo isActive('gelisim.php', $current_page); ?>">📈 Gelişim</a>
+    <a href="rozetlerim.php" class="menu-item <?php echo isActive('rozetlerim.php', $current_page); ?>">🏆 Rozetlerim</a>
+    <a href="profil.php" class="menu-item <?php echo isActive('profil.php', $current_page); ?>">👤 Profil Ayarları</a>
+    
     <a href="cikis.php" class="menu-item" style="color:#ef4444; margin-top: 40px;">🚪 Çıkış Yap</a>
 </div>
 
 <div class="main">
-
-    <?php if(!$is_premium): ?>
-
-    <button type="button" class="premium-btn" data-bs-toggle="modal" data-bs-target="#premiumInfoModal">
-        <i class="fas fa-crown"></i> Premium Edinin
-    </button>
-
-    <?php else: ?>
-
-    <div class="dropdown" style="position: absolute; top: 40px; right: 40px;">
-        
-        <button class="premium-btn dropdown-toggle" 
-                type="button" 
-                data-bs-toggle="dropdown" 
-                aria-expanded="false"
-                style="background: #10b981; border:none;">
-            <i class="fas fa-check-circle"></i> Premium Üye
-        </button>
-
-        <ul class="dropdown-menu dropdown-menu-end" style="border-radius: 14px; padding: 10px; border:none; box-shadow: 0 10px 25px rgba(0,0,0,0.08);">
-            <li>
-                <a class="dropdown-item" 
-                href="premium_yonet.php"
-                onclick="return confirm('Premium üyeliğini iptal etmek istediğine emin misin?')"
-                style="color:#ef4444; font-weight:600; border-radius:10px;">
-                <i class="fas fa-times-circle"></i> Premiumu İptal Et
-                </a>
-            </li>
-        </ul>
-
-    </div>
-
-    <?php endif; ?>
     
+    <?php if(!$is_premium): ?>
+        <button type="button" class="premium-btn" data-bs-toggle="modal" data-bs-target="#premiumInfoModal">
+            <i class="fas fa-crown"></i> Premium Edinin
+        </button>
+    <?php endif; ?>
 
-    <h1>Hoş Geldin, <?php echo htmlspecialchars($_SESSION['ad_soyad']); ?>! 👋</h1>
+    <h1>Hoş Geldin, <?php echo htmlspecialchars($user_data['ad_soyad']); ?>! 👋</h1>
+
+    <?php if ($yeni_diyet || $yeni_hoca): ?>
+        <div style="background:#fff9db; border: 1px solid #fab005; padding: 15px; border-radius: 16px; margin-bottom: 20px;">
+            🔔 
+            <?php if($yeni_diyet) echo 'Diyetisyeninizden yeni bir not var! <a href="beslenme.php" style="font-weight:700; color:#856404;">Beslenme Sayfasına Git</a> '; ?>
+            <?php if($yeni_hoca) echo 'Hocanızdan yeni bir not var! <a href="egzersiz.php" style="font-weight:700; color:#856404;">Egzersiz Sayfasına Git</a>'; ?>
+        </div>
+    <?php endif; ?>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+        <?php if (!$has_diyetisyen): ?>
+            <div class="uzman-alert" style="background: #ecfdf5; border-color: #a7f3d0;">
+                <span style="color: #065f46; font-weight:600;">🥗 Diyetisyeniniz seçilmedi.</span>
+                <a href="uzman_secmesi.php?rol=diyetisyen" class="btn btn-success btn-sm">Diyetisyen Seç</a>
+            </div>
+        <?php endif; ?>
+        <?php if (!$has_hoca): ?>
+            <div class="uzman-alert" style="background: #eff6ff; border-color: #bfdbfe;">
+                <span style="color: #1e40af; font-weight:600;">🏋️ Spor hocanız seçilmedi.</span>
+                <a href="uzman_secmesi.php?rol=hoca" class="btn btn-primary btn-sm">Hoca Seç</a>
+            </div>
+        <?php endif; ?>
+    </div>
 
     <?php if ($gunun_tarifi): ?>
         <div class="recipe-highlight">
             <h3 style="color: #166534; margin: 0;"><i class="fas fa-utensils"></i> Günün Sağlıklı Tarifi</h3>
             <h4 style="margin: 10px 0;"><?php echo htmlspecialchars($gunun_tarifi['tarif_baslik']); ?></h4>
             <p style="font-size: 14px; color: #374151;"><?php echo nl2br(htmlspecialchars($gunun_tarifi['tarif_icerik'])); ?></p>
-            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
                 <small style="color: #15803d; font-weight: 600;">👨‍⚕️ Diyetisyen: <?php echo htmlspecialchars($gunun_tarifi['ad_soyad']); ?></small>
-                
-                <div style="text-align: right;">
-                    <p style="font-size: 12px; font-weight: 600; margin-bottom: 5px; color: #166534;">Bu tarife puan ver:</p>
-                    <form action="islem_v2.php?is=puan_ver" method="POST" style="display: flex; gap: 5px;">
-                        <input type="hidden" name="tarif_id" value="<?php echo $gunun_tarifi['id']; ?>">
-                        <?php for($i=1; $i<=5; $i++): ?>
-                            <button type="submit" name="puan" value="<?php echo $i; ?>" 
-                                    class="rating-btn <?php echo ($mevcut_puan == $i) ? 'active' : ''; ?>">
-                                <?php echo $i; ?> ⭐
-                            </button>
-                        <?php endfor; ?>
-                    </form>
-                </div>
+                <form action="islem_v2.php?is=puan_ver" method="POST" style="display: flex; gap: 5px;">
+                    <input type="hidden" name="tarif_id" value="<?php echo $gunun_tarifi['id']; ?>">
+                    <?php for($i=1; $i<=5; $i++): ?>
+                        <button type="submit" name="puan" value="<?php echo $i; ?>" class="btn btn-sm <?php echo ($mevcut_puan == $i) ? 'btn-success' : 'btn-outline-success'; ?>"><?php echo $i; ?>⭐</button>
+                    <?php endfor; ?>
+                </form>
             </div>
-        </div>
-    <?php endif; ?>
-
-    <?php if ($yeni_diyet || $yeni_hoca || isset($_GET['puan'])): ?>
-        <div style="background:#fff9db; border-color:#fab005; padding: 15px; border-radius: 16px; margin-bottom: 20px; border: 1px solid;">
-            <?php if(isset($_GET['puan'])): ?>
-                ✅ Puanınız başarıyla kaydedildi!
-            <?php else: ?>
-                🔔 Yeni bir uzman notunuz var! <a href="danisan_mesajlar.php" style="color: #856404; font-weight: 600;">Görüntüle</a>
-            <?php endif; ?>
         </div>
     <?php endif; ?>
 
@@ -222,126 +184,54 @@ $yeni_hoca = $h_uyari->fetch();
         <div class="stat-card" style="border-color: var(--blue);">
             <div style="font-size: 14px; color: #64748b;">💧 Su</div>
             <div style="font-size: 24px; font-weight: 600;"><?php echo $su; ?> / 2.5 L</div>
-            <div class="progress-container">
-                <div class="progress-bar" style="background: var(--blue); width: <?php echo min(($su/2.5)*100, 100); ?>%"></div>
-            </div>
         </div>
         <div class="stat-card" style="border-color: var(--orange);">
             <div style="font-size: 14px; color: #64748b;">🔥 Kalori</div>
             <div style="font-size: 24px; font-weight: 600;"><?php echo round($alinan); ?> / 2000</div>
-            <div class="progress-container">
-                <div class="progress-bar" style="background: var(--orange); width: <?php echo min(($alinan/2000)*100, 100); ?>%"></div>
-            </div>
         </div>
         <div class="stat-card" style="border-color: var(--green);">
             <div style="font-size: 14px; color: #64748b;">😴 Uyku</div>
             <div style="font-size: 24px; font-weight: 600;"><?php echo $uyku; ?> / 8 Saat</div>
-            <div class="progress-container">
-                <div class="progress-bar" style="background: var(--green); width: <?php echo min(($uyku/8)*100, 100); ?>%"></div>
-            </div>
         </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 30px;">
-        <div style="background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04);">
-            <h3>➕ Bugünün Verilerini Gir</h3>
-            <?php if ($mevcut_kayit): ?>
-                <div style="background:#fff7ed; padding:20px; border-radius:12px; text-align:center; border:1px solid #ffedd5;">
-                    <p>⚠️ Bugün zaten kayıt yaptınız.</p>
-                    <a href="guncelle.php" style="background:#f97316; color:white; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600;">Güncelle</a>
-                </div>
-            <?php else: ?>
-                <form action="islem_v2.php?is=verileri_kaydet" method="POST">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-                        <input type="number" step="0.1" name="su_miktari" placeholder="Su (Litre)" required style="padding:14px; border:1px solid #e2e8f0; border-radius:12px;">
-                        <input type="number" step="0.1" name="uyku_suresi" placeholder="Uyku (Saat)" required style="padding:14px; border:1px solid #e2e8f0; border-radius:12px;">
-                        <input type="number" name="alinan_kalori" placeholder="Alınan Kalori" required style="padding:14px; border:1px solid #e2e8f0; border-radius:12px;">
-                        <input type="number" name="yakilan_kalori" placeholder="Yakılan Kalori" required style="padding:14px; border:1px solid #e2e8f0; border-radius:12px;">
-                        <input type="number" name="spor_suresi" placeholder="Spor (Dakika)" required style="padding:14px; border:1px solid #e2e8f0; border-radius:12px;">
-                        <input type="number" step="0.1" name="guncel_kilo" placeholder="Kilo (kg)" required style="padding:14px; border:1px solid #e2e8f0; border-radius:12px;">
-                    </div>
-                    <button type="submit" class="btn-submit">Kaydı Sisteme İşle</button>
-                </form>
-            <?php endif; ?>
-        </div>
-
-        <div style="background: transparent; padding: 0;">
-            <div style="background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04); margin-bottom: 20px;">
-                <a href="danisan_mesajlar.php" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; background: #ffffff; color: #1e293b; border: 1px solid #e2e8f0; padding: 15px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: 0.3s; font-weight: 600;">
-                    <i class="fas fa-envelope-open-text" style="color: #3b82f6;"></i> 📩 Uzman Notlarım
-                </a>
-                <a href="rozetlerim.php" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; background: #ffffff; color: #1e293b; border: 1px solid #e2e8f0; padding: 15px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: 0.3s; font-weight: 600; margin-top: 15px;">
-                    <i class="fas fa-award" style="color: #f59e0b;"></i> 🏆 Rozetlerim
-                </a>
+    <div style="background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 15px rgba(0,0,0,0.04);">
+        <h3>➕ Bugünün Verilerini Gir</h3>
+        <?php if ($mevcut_kayit): ?>
+            <div style="background:#fff7ed; padding:20px; border-radius:12px; text-align:center; border:1px solid #ffedd5;">
+                <p>⚠️ Bugün zaten kayıt yaptınız. Güncel verilerinizi <strong>Gelişim</strong> sayfasından görebilirsiniz.</p>
             </div>
-
-            <div style="background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04);">
-                <h3>📋 Bugünün Kayıtları</h3>
-                <?php
-                $liste = $conn->prepare("SELECT * FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ? ORDER BY id DESC");
-                $liste->execute([$user_id, $bugun]);
-                $satirlar = $liste->fetchAll();
-
-                foreach ($satirlar as $k):
-                ?>
-                <div style="padding: 15px; border-bottom: 1px solid #f1f5f9; background: #fcfcfc; border-radius: 10px; margin-bottom: 10px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                        <span style="font-size: 13px; color: #64748b;">Kayıt Özeti</span>
-                        <a href="islem_v2.php?is=kayit_sil&id=<?php echo $k['id']; ?>" onclick="return confirm('Silmek istediğine emin misin?')" style="color:#ef4444; font-size:13px; text-decoration:none;">Sil</a>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 13px;">
-                        <div>🍎 <?php echo $k['alinan_kalori']; ?> kcal</div>
-                        <div>💧 <?php echo $k['su_miktari']; ?> L</div>
-                    </div>
+        <?php else: ?>
+            <form action="islem_v2.php?is=verileri_kaydet" method="POST">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
+                    <input type="number" step="0.1" name="su_miktari" placeholder="Su (Litre)" required class="form-control">
+                    <input type="number" step="0.1" name="uyku_suresi" placeholder="Uyku (Saat)" required class="form-control">
+                    <input type="number" name="alinan_kalori" placeholder="Alınan Kalori" required class="form-control">
+                    <input type="number" name="yakilan_kalori" placeholder="Yakılan Kalori" required class="form-control">
+                    <input type="number" name="spor_suresi" placeholder="Spor (Dakika)" required class="form-control">
+                    <input type="number" step="0.1" name="guncel_kilo" placeholder="Kilo (kg)" required class="form-control">
                 </div>
-                <?php endforeach; ?>
-                <?php if(!$satirlar): ?>
-                    <p style="text-align:center; color:#94a3b8;">Henüz kayıt yok.</p>
-                <?php endif; ?>
-            </div>
-        </div>
+                <button type="submit" class="btn btn-primary w-100 p-3" style="border-radius:14px; font-weight:600;">Kaydı Sisteme İşle</button>
+            </form>
+        <?php endif; ?>
     </div>
+
 </div>
 
-<div class="modal fade" id="premiumInfoModal" tabindex="-1" aria-labelledby="premiumInfoModalLabel" aria-hidden="true">
+<div class="modal fade" id="premiumInfoModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border-radius: 30px; border: none; overflow: hidden;">
-      <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; padding: 25px;">
-        <h5 class="modal-title" id="premiumInfoModalLabel"><i class="fas fa-crown"></i> Neden Premium?</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-content" style="border-radius: 30px;">
+      <div class="modal-header bg-warning text-white">
+        <h5 class="modal-title">Neden Premium?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body" style="padding: 30px;">
-        <ul class="list-unstyled">
-            <li class="mb-3"><i class="fas fa-check-circle text-warning"></i> <b>Kişisel Uzman Desteği:</b> Diyetisyen ve Spor hocanızla birebir iletişim kurun.</li>
-            <li class="mb-3"><i class="fas fa-check-circle text-warning"></i> <b>Özel Planlar:</b> Size özel hazırlanmış haftalık yemek ve egzersiz listeleri.</li>
-            <li class="mb-3"><i class="fas fa-check-circle text-warning"></i> <b>Detaylı Analiz:</b> Gelişim grafiklerinizi aylık ve yıllık bazda görüntüleyin.</li>
-            <li class="mb-3"><i class="fas fa-check-circle text-warning"></i> <b>Öncelikli Erişim:</b> Yeni tarifler ve özelliklerden ilk siz haberdar olun.</li>
-        </ul>
-        <hr>
-        <div class="text-center mt-4">
-            <a href="premium_planlar.php" class="btn btn-warning w-100" style="padding: 15px; border-radius: 15px; font-weight: 600; font-size: 18px;">Planları Gör ve Devam Et</a>
-        </div>
+      <div class="modal-body p-4 text-center">
+        <p>Uzmanlarınızla birebir iletişim kurun ve size özel gelişim grafiklerine erişin.</p>
+        <button class="btn btn-warning w-100" onclick="alert('Yakında!')">Planları İncele</button>
       </div>
     </div>
   </div>
 </div>
+
 </body>
 </html>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<?php if (isset($_GET['yeni_rozet'])): ?>
-<script>
-    Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'success',
-        title: 'Tebrikler! 🎉',
-        text: '<?php echo htmlspecialchars($_GET['yeni_rozet']); ?> rozetini kazandın!',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        background: '#ffffff',
-        iconColor: '#4caf50'
-    });
-</script>
-<?php endif; ?>

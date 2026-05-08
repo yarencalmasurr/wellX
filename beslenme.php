@@ -1,7 +1,10 @@
 <?php
+
+
 session_start();
 include 'baglan.php';
 
+// Oturum kontrolü
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit();
@@ -9,11 +12,11 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// Diyetisyenin bu danışan için yazdığı planları tarih sırasına göre çek
 $sorgu = $conn->prepare("SELECT bp.*, k.ad_soyad as diyetisyen_adi 
                          FROM beslenme_planlari bp 
                          LEFT JOIN kullanicilar k ON bp.diyetisyen_id = k.id 
                          WHERE bp.user_id = ? 
+                         AND DATE(bp.kayit_tarihi) = CURDATE()
                          ORDER BY bp.kayit_tarihi DESC");
 $sorgu->execute([$user_id]);
 $planlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
@@ -35,7 +38,8 @@ $planlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
         .plan-date { font-size: 13px; color: #95a5a6; }
         .plan-text { white-space: pre-line; color: #2d3436; line-height: 1.6; }
         .no-plan { text-align: center; padding: 50px; background: white; border-radius: 20px; color: #95a5a6; }
-        .menu-item { display: flex; align-items: center; padding: 12px; color: #636e72; text-decoration: none; border-radius: 12px; margin-bottom: 10px; }
+        .menu-item { display: flex; align-items: center; padding: 12px; color: #636e72; text-decoration: none; border-radius: 12px; margin-bottom: 10px; transition: 0.3s; }
+        .menu-item:hover { background: #f8f9fa; }
         .menu-item.active { background: #eafaf1; color: var(--primary); font-weight: 600; }
     </style>
 </head>
@@ -50,7 +54,7 @@ $planlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
 </div>
 
 <div class="content">
-    <h1>🥗 Beslenme Planlarım</h1>
+    <h1>🥗 Bugünün Beslenme Planları</h1>
 
     <?php if (count($planlar) > 0): ?>
         <?php foreach ($planlar as $plan): ?>
@@ -66,8 +70,8 @@ $planlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
         <?php endforeach; ?>
     <?php else: ?>
         <div class="no-plan">
-            <h3>Henüz bir beslenme planınız bulunmuyor.</h3>
-            <p>Diyetisyeniniz plan oluşturduğunda burada görünecektir.</p>
+            <h3>Henüz bugüne ait bir planınız bulunmuyor.</h3>
+            <p>Diyetisyeniniz yeni bir plan paylaştığında burada anlık olarak göreceksiniz.</p>
         </div>
     <?php endif; ?>
 </div>
