@@ -37,11 +37,11 @@ $kullanici_sorgu->execute([$user_id]);
 $kullanici_veri = $kullanici_sorgu->fetch();
 $is_premium = $kullanici_veri['is_premium'] ?? 0;
 
-// --- GÜNÜN TARİFİ SORGUSU ---
 $tarif_sorgu = $conn->prepare("
     SELECT t.*, k.ad_soyad 
     FROM gunun_tarifi t 
     JOIN kullanicilar k ON t.diyetisyen_id = k.id 
+    WHERE t.ekleme_tarihi >= DATE_SUB(NOW(), INTERVAL 1 DAY)
     ORDER BY t.id DESC LIMIT 1
 ");
 $tarif_sorgu->execute();
