@@ -2,7 +2,7 @@
 /**
  * Proje: saglik_portali
  * Dosya: islem_v2.php
- * Açıklama: Tüm form işlemlerinin (Giriş, Kayıt, Atama, Planlama) yönetildiği tam dosya
+ * Açıklama: Tüm form işlemlerinin yönetildiği tam ve güncel dosya
  */
 
 ob_start();
@@ -56,16 +56,20 @@ try {
         $sorgu = $conn->prepare("INSERT INTO aktivite_kayitlari (user_id, alinan_kalori, yakilan_kalori, su_miktari, uyku_suresi, guncel_kilo, spor_suresi, kayit_tarihi) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $sorgu->execute([$user_id, $_POST['alinan_kalori'], $_POST['yakilan_kalori'], $_POST['su_miktari'], $_POST['uyku_suresi'], $_POST['guncel_kilo'], $_POST['spor_suresi'], $tarih]);
         
+        // --- ROZET SİSTEMİ TETİKLEYİCİ ---
         include_once 'rozet_fonksiyonu.php';
         $yeni_rozet = null;
+        
+        // Kazanılan rozetleri kontrol et ve ismini yakala
         $r1 = rozetKontrolEt($conn, $user_id, 'su', $_POST['su_miktari']);
         $r2 = rozetKontrolEt($conn, $user_id, 'uyku', $_POST['uyku_suresi']);
         $r3 = rozetKontrolEt($conn, $user_id, 'spor', $_POST['spor_suresi']);
 
         if ($r1) $yeni_rozet = $r1;
-        if ($r2) $yeni_rozet = $r2;
-        if ($r3) $yeni_rozet = $r3;
+        elseif ($r2) $yeni_rozet = $r2;
+        elseif ($r3) $yeni_rozet = $r3;
 
+        // Rozet kazanıldıysa animasyon için URL'ye ekle
         if ($yeni_rozet) {
             header("Location: panel.php?durum=ok&yeni_rozet=" . urlencode($yeni_rozet));
         } else {
@@ -74,7 +78,7 @@ try {
         exit();
     }
 
-    // --- 3. UZMAN ATAMA (Seçim Kaydı) ---
+    // --- 3. UZMAN ATAMA ---
     elseif ($is == 'uzman_atama') {
         if (!isset($_SESSION['user_id'])) { die("Oturum hatası!"); }
         $danisan_id = $_SESSION['user_id'];
@@ -86,10 +90,10 @@ try {
 
         if ($kontrol->rowCount() > 0) {
             $sql = $conn->prepare("UPDATE uzman_danisan_eslesmeleri SET uzman_id = ? WHERE danisan_id = ? AND uzman_rol = ?");
-            $sonuc = $sql->execute([$uzman_id, $danisan_id, $rol]);
+            $sql->execute([$uzman_id, $danisan_id, $rol]);
         } else {
             $sql = $conn->prepare("INSERT INTO uzman_danisan_eslesmeleri (danisan_id, uzman_id, uzman_rol) VALUES (?, ?, ?)");
-            $sonuc = $sql->execute([$danisan_id, $uzman_id, $rol]);
+            $sql->execute([$danisan_id, $uzman_id, $rol]);
         }
 
         header("Location: panel.php?durum=uzman_secildi");
@@ -112,8 +116,8 @@ try {
         $r3 = rozetKontrolEt($conn, $user_id, 'spor', $_POST['spor_suresi']);
 
         if ($r1) $yeni_rozet = $r1;
-        if ($r2) $yeni_rozet = $r2;
-        if ($r3) $yeni_rozet = $r3;
+        elseif ($r2) $yeni_rozet = $r2;
+        elseif ($r3) $yeni_rozet = $r3;
 
         if ($yeni_rozet) {
             header("Location: panel.php?durum=guncellendi&yeni_rozet=" . urlencode($yeni_rozet));
@@ -223,6 +227,7 @@ try {
         header("Location: basvuru_yonetim.php?durum=reddedildi");
         exit();
     }
+
     // --- 9. PROFİL GÜNCELLEME ---
     elseif ($is == 'profil_guncelle') {
         if (!isset($_SESSION['user_id'])) { die("Oturum hatası!"); }
@@ -233,16 +238,14 @@ try {
         $yeni_sifre = $_POST['yeni_sifre'];
 
         if (!empty($yeni_sifre)) {
-            // Şifre değişecekse
             $sorgu = $conn->prepare("UPDATE kullanicilar SET ad_soyad=?, kullanici_adi=?, email=?, sifre=? WHERE id=?");
             $sorgu->execute([$ad_soyad, $kadi, $email, $yeni_sifre, $user_id]);
         } else {
-            // Şifre değişmeyecekse
             $sorgu = $conn->prepare("UPDATE kullanicilar SET ad_soyad=?, kullanici_adi=?, email=? WHERE id=?");
             $sorgu->execute([$ad_soyad, $kadi, $email, $user_id]);
         }
 
-        $_SESSION['ad_soyad'] = $ad_soyad; // Oturumdaki ismi de güncelle
+        $_SESSION['ad_soyad'] = $ad_soyad;
         header("Location: profil.php?durum=ok");
         exit();
     }

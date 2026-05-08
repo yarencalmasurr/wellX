@@ -2,7 +2,7 @@
 /**
  * Proje: saglik_portali
  * Dosya: panel.php
- * Açıklama: Danışanların ana yönetim paneli - Tüm özellikler dahil.
+ * Açıklama: Danışanların ana yönetim paneli - Tüm özellikler ve Rozet Animasyonu dahil.
  */
 
 session_start(); 
@@ -72,7 +72,7 @@ $su = $veri['t_su'] ?? 0;
 $alinan = $veri['t_alinan'] ?? 0;
 $uyku = $veri['t_uyku'] ?? 0;
 
-// Bildirimler (Bugün gelen notlar)
+// Bildirimler
 $d_uyari = $conn->prepare("SELECT id FROM beslenme_planlari WHERE user_id = ? AND okundu = 0 AND DATE(kayit_tarihi) = CURDATE() LIMIT 1");
 $d_uyari->execute([$user_id]);
 $yeni_diyet = $d_uyari->fetch();
@@ -89,8 +89,9 @@ $yeni_hoca = $h_uyari->fetch();
     <title>Sağlık Takip | Panel</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         :root { --blue: #0ea5e9; --orange: #f59e0b; --green: #10b981; --bg: #f8fafc; --sidebar: #ffffff; }
@@ -125,6 +126,9 @@ $yeni_hoca = $h_uyari->fetch();
     <a href="egzersiz.php" class="menu-item <?php echo isActive('egzersiz.php', $current_page); ?>">🏋️ Egzersiz</a>
     <a href="gelisim.php" class="menu-item <?php echo isActive('gelisim.php', $current_page); ?>">📈 Gelişim</a>
     <a href="rozetlerim.php" class="menu-item <?php echo isActive('rozetlerim.php', $current_page); ?>">🏆 Rozetlerim</a>
+    <a href="turnuva.php" class="menu-item <?php echo isActive('turnuva.php', $current_page); ?>">
+    <i class="fas fa-trophy me-2"></i> Turnuva Sıralaması
+</a>
     <a href="profil.php" class="menu-item <?php echo isActive('profil.php', $current_page); ?>">👤 Profil Ayarları</a>
     
     <a href="cikis.php" class="menu-item" style="color:#ef4444; margin-top: 40px;">🚪 Çıkış Yap</a>
@@ -232,6 +236,25 @@ $yeni_hoca = $h_uyari->fetch();
     </div>
   </div>
 </div>
+
+<?php if (isset($_GET['yeni_rozet'])): ?>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Tebrikler! 🎉',
+            text: '<?php echo htmlspecialchars($_GET['yeni_rozet']); ?> rozetini kazandın!',
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true,
+            background: '#ffffff',
+            iconColor: '#10b981'
+        });
+    });
+</script>
+<?php endif; ?>
 
 </body>
 </html>
