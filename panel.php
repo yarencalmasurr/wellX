@@ -2,7 +2,7 @@
 /**
  * Proje: saglik_portali
  * Dosya: panel.php
- * Açıklama: Danışanların ana yönetim paneli - Tüm özellikler ve Rozet Animasyonu dahil.
+ * Açıklama: Danışanların ana yönetim paneli - Bildirim sistemli sadeleştirilmiş versiyon.
  */
 
 session_start(); 
@@ -39,7 +39,7 @@ $hoca_kontrol = $conn->prepare("SELECT uzman_id FROM uzman_danisan_eslesmeleri W
 $hoca_kontrol->execute([$user_id]);
 $has_hoca = $hoca_kontrol->fetch();
 
-// --- GÜNÜN TARİFİ (24 Saatlik) ---
+// --- GÜNÜN TARİFİ ---
 $tarif_sorgu = $conn->prepare("
     SELECT t.*, k.ad_soyad 
     FROM gunun_tarifi t 
@@ -59,11 +59,7 @@ if ($gunun_tarifi) {
     $mevcut_puan = $puan_veri['puan'] ?? 0;
 }
 
-// --- İSTATİSTİKLER VE KAYIT KONTROLÜ ---
-$kontrol = $conn->prepare("SELECT id FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
-$kontrol->execute([$user_id, $bugun]);
-$mevcut_kayit = $kontrol->fetch();
-
+// --- İSTATİSTİKLER ---
 $stat_sorgu = $conn->prepare("SELECT SUM(su_miktari) as t_su, SUM(alinan_kalori) as t_alinan, SUM(uyku_suresi) as t_uyku FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
 $stat_sorgu->execute([$user_id, $bugun]);
 $veri = $stat_sorgu->fetch(PDO::FETCH_ASSOC);
@@ -72,14 +68,10 @@ $su = $veri['t_su'] ?? 0;
 $alinan = $veri['t_alinan'] ?? 0;
 $uyku = $veri['t_uyku'] ?? 0;
 
-// Bildirimler
-$d_uyari = $conn->prepare("SELECT id FROM beslenme_planlari WHERE user_id = ? AND okundu = 0 AND DATE(kayit_tarihi) = CURDATE() LIMIT 1");
-$d_uyari->execute([$user_id]);
-$yeni_diyet = $d_uyari->fetch();
-
-$h_uyari = $conn->prepare("SELECT id FROM egzersiz_planlari WHERE user_id = ? AND okundu = 0 AND DATE(kayit_tarihi) = CURDATE() LIMIT 1");
-$h_uyari->execute([$user_id]);
-$yeni_hoca = $h_uyari->fetch();
+// Kayıt Kontrolü
+$kontrol = $conn->prepare("SELECT id FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
+$kontrol->execute([$user_id, $bugun]);
+$mevcut_kayit = $kontrol->fetch();
 ?>
 
 <!DOCTYPE html>
@@ -96,14 +88,11 @@ $yeni_hoca = $h_uyari->fetch();
     <style>
         :root { --blue: #0ea5e9; --orange: #f59e0b; --green: #10b981; --bg: #f8fafc; --sidebar: #ffffff; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; display: flex; color: #1e293b; }
-        
         .sidebar { width: 260px; background: var(--sidebar); height: 100vh; padding: 30px 20px; box-shadow: 4px 0 24px rgba(0,0,0,0.03); position: fixed; z-index: 100;}
         .logo { font-size: 22px; font-weight: 600; color: #0f172a; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; text-decoration:none; }
-        
         .menu-item { display: flex; align-items: center; padding: 14px 18px; color: #64748b; text-decoration: none; border-radius: 12px; margin-bottom: 8px; transition: 0.2s; }
         .menu-item:hover { background: #f8fafc; color: #0f172a; }
         .menu-item.active { background: #f0f9ff; color: var(--blue); font-weight: 600; }
-        
         .main { margin-left: 260px; padding: 40px; width: calc(100% - 260px); position: relative; }
         .stat-card { background: white; padding: 24px; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04); border-left: 6px solid; }
         .recipe-highlight { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0; border-radius: 24px; padding: 25px; margin-bottom: 30px; }
@@ -114,28 +103,45 @@ $yeni_hoca = $h_uyari->fetch();
 <body>
 
 <div class="sidebar">
-    <a href="panel.php" class="logo">🩺 Sağlık Takip</a>
+    <div style="margin-bottom: 30px;">
+        <a href="panel.php" class="logo" style="margin-bottom: 5px;">🩺 Sağlık Takip</a>
+        <?php if($is_premium == 1): ?>
+            <div style="margin-left: 32px;">
+                <span style="background: linear-gradient(135deg, #f59e0b, #fbbf24); color: white; padding: 2px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">
+                    <i class="fas fa-crown" style="font-size: 9px;"></i> PREMIUM
+                </span>
+            </div>
+        <?php endif; ?>
+    </div>
     
     <?php 
         $current_page = basename($_SERVER['PHP_SELF']); 
-        function isActive($page, $current) { return ($page == $current) ? 'active' : ''; }
+        if(!function_exists('isActive')){
+            function isActive($page, $current) { return ($page == $current) ? 'active' : ''; }
+        }
     ?>
 
     <a href="panel.php" class="menu-item <?php echo isActive('panel.php', $current_page); ?>">🏠 Özet Paneli</a>
     <a href="beslenme.php" class="menu-item <?php echo isActive('beslenme.php', $current_page); ?>">🥗 Beslenme</a>
     <a href="egzersiz.php" class="menu-item <?php echo isActive('egzersiz.php', $current_page); ?>">🏋️ Egzersiz</a>
+
+    <?php if($is_premium == 1): ?>
+        <a href="sorularim.php" class="menu-item <?php echo isActive('sorularim.php', $current_page); ?>">
+            <i class="fas fa-envelope-open-text me-2"></i> Uzmana Sorular
+        </a>
+    <?php endif; ?>
+
     <a href="gelisim.php" class="menu-item <?php echo isActive('gelisim.php', $current_page); ?>">📈 Gelişim</a>
     <a href="rozetlerim.php" class="menu-item <?php echo isActive('rozetlerim.php', $current_page); ?>">🏆 Rozetlerim</a>
     <a href="turnuva.php" class="menu-item <?php echo isActive('turnuva.php', $current_page); ?>">
-    <i class="fas fa-trophy me-2"></i> Turnuva Sıralaması
-</a>
-    <a href="profil.php" class="menu-item <?php echo isActive('profil.php', $current_page); ?>">👤 Profil Ayarları</a>
+        <i class="fas fa-trophy me-2"></i> Turnuva
+    </a>
+    <a href="profil.php" class="menu-item <?php echo isActive('profil.php', $current_page); ?>">👤 Profil</a>
     
     <a href="cikis.php" class="menu-item" style="color:#ef4444; margin-top: 40px;">🚪 Çıkış Yap</a>
 </div>
 
 <div class="main">
-    
     <?php if(!$is_premium): ?>
         <button type="button" class="premium-btn" data-bs-toggle="modal" data-bs-target="#premiumInfoModal">
             <i class="fas fa-crown"></i> Premium Edinin
@@ -144,25 +150,40 @@ $yeni_hoca = $h_uyari->fetch();
 
     <h1>Hoş Geldin, <?php echo htmlspecialchars($user_data['ad_soyad']); ?>! 👋</h1>
 
-    <?php if ($yeni_diyet || $yeni_hoca): ?>
-        <div style="background:#fff9db; border: 1px solid #fab005; padding: 15px; border-radius: 16px; margin-bottom: 20px;">
-            🔔 
-            <?php if($yeni_diyet) echo 'Diyetisyeninizden yeni bir not var! <a href="beslenme.php" style="font-weight:700; color:#856404;">Beslenme Sayfasına Git</a> '; ?>
-            <?php if($yeni_hoca) echo 'Hocanızdan yeni bir not var! <a href="egzersiz.php" style="font-weight:700; color:#856404;">Egzersiz Sayfasına Git</a>'; ?>
-        </div>
+    <?php if($is_premium == 1): ?>
+        <?php 
+        $bildirim_sorgu = $conn->prepare("SELECT id FROM uzman_sorulari WHERE danisan_id = ? AND durum = 'cevaplandi' LIMIT 1");
+        $bildirim_sorgu->execute([$user_id]);
+        if ($bildirim_sorgu->fetch()): ?>
+            <div class="alert shadow-sm d-flex align-items-center justify-content-between" 
+                 style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; border-radius: 16px; color: white; padding: 20px; margin-top: 20px;">
+                <div class="d-flex align-items-center">
+                    <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 12px; margin-right: 15px;">
+                        <i class="fas fa-comment-medical fa-lg"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0" style="font-weight: 600;">Uzmanınız Sorunuzu Yanıtladı!</h5>
+                        <p class="mb-0 small" style="opacity: 0.9;">Yeni bir mesajınız var. Detaylar için sayfaya gidin.</p>
+                    </div>
+                </div>
+                <a href="sorularim.php" class="btn btn-light btn-sm fw-bold" style="border-radius: 10px; color: #059669; padding: 8px 15px;">
+                    Cevabı Gör <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
         <?php if (!$has_diyetisyen): ?>
             <div class="uzman-alert" style="background: #ecfdf5; border-color: #a7f3d0;">
                 <span style="color: #065f46; font-weight:600;">🥗 Diyetisyeniniz seçilmedi.</span>
-                <a href="uzman_secmesi.php?rol=diyetisyen" class="btn btn-success btn-sm">Diyetisyen Seç</a>
+                <a href="uzman_secmesi.php?rol=diyetisyen" class="btn btn-success btn-sm">Seç</a>
             </div>
         <?php endif; ?>
         <?php if (!$has_hoca): ?>
             <div class="uzman-alert" style="background: #eff6ff; border-color: #bfdbfe;">
                 <span style="color: #1e40af; font-weight:600;">🏋️ Spor hocanız seçilmedi.</span>
-                <a href="uzman_secmesi.php?rol=hoca" class="btn btn-primary btn-sm">Hoca Seç</a>
+                <a href="uzman_secmesi.php?rol=hoca" class="btn btn-primary btn-sm">Seç</a>
             </div>
         <?php endif; ?>
     </div>
@@ -184,7 +205,7 @@ $yeni_hoca = $h_uyari->fetch();
         </div>
     <?php endif; ?>
 
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 40px;">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 40px; margin-top: 20px;">
         <div class="stat-card" style="border-color: var(--blue);">
             <div style="font-size: 14px; color: #64748b;">💧 Su</div>
             <div style="font-size: 24px; font-weight: 600;"><?php echo $su; ?> / 2.5 L</div>
@@ -202,9 +223,7 @@ $yeni_hoca = $h_uyari->fetch();
     <div style="background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 15px rgba(0,0,0,0.04);">
         <h3>➕ Bugünün Verilerini Gir</h3>
         <?php if ($mevcut_kayit): ?>
-            <div style="background:#fff7ed; padding:20px; border-radius:12px; text-align:center; border:1px solid #ffedd5;">
-                <p>⚠️ Bugün zaten kayıt yaptınız. Güncel verilerinizi <strong>Gelişim</strong> sayfasından görebilirsiniz.</p>
-            </div>
+            <div class="alert alert-warning text-center">⚠️ Bugün zaten kayıt yaptınız.</div>
         <?php else: ?>
             <form action="islem_v2.php?is=verileri_kaydet" method="POST">
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
@@ -219,7 +238,6 @@ $yeni_hoca = $h_uyari->fetch();
             </form>
         <?php endif; ?>
     </div>
-
 </div>
 
 <div class="modal fade" id="premiumInfoModal" tabindex="-1">
@@ -236,25 +254,6 @@ $yeni_hoca = $h_uyari->fetch();
     </div>
   </div>
 </div>
-
-<?php if (isset($_GET['yeni_rozet'])): ?>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'Tebrikler! 🎉',
-            text: '<?php echo htmlspecialchars($_GET['yeni_rozet']); ?> rozetini kazandın!',
-            showConfirmButton: false,
-            timer: 4000,
-            timerProgressBar: true,
-            background: '#ffffff',
-            iconColor: '#10b981'
-        });
-    });
-</script>
-<?php endif; ?>
 
 </body>
 </html>

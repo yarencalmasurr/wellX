@@ -31,7 +31,7 @@ try {
             if ($rol == 'admin') header("Location: basvuru_yonetim.php");
             elseif ($rol == 'diyetisyen') header("Location: diyetisyen_paneli.php");
             elseif ($rol == 'hoca') header("Location: hoca_paneli.php");
-            elseif ($rol == 'danışan' || $rol == 'danisan') header("Location: panel.php");
+            else header("Location: panel.php");
             exit();
         } else {
             header("Location: index.php?hata=1");
@@ -39,184 +39,103 @@ try {
         }
     }
 
-    // --- 2. DANIŞAN GÜNLÜK VERİ KAYDI ---
+    // --- 2. UZMAN KAYIT (BAŞVURU) ---
+    elseif ($is == 'uzman_kayit') {
+        $ad_soyad = $_POST['ad_soyad'];
+        $email = $_POST['email'];
+        $uzmanlik = $_POST['uzmanlik'];
+        $tecrube = $_POST['tecrube'];
+        
+        $ekle = $conn->prepare("INSERT INTO uzman_basvurulari (ad_soyad, email, uzmanlik, tecrube, durum) VALUES (?, ?, ?, ?, 'beklemede')");
+        $ekle->execute([$ad_soyad, $email, $uzmanlik, $tecrube]);
+        header("Location: index.php?basvuru=basarili");
+        exit();
+    }
+
+    // --- 3. DANIŞAN KAYIT ---
+    elseif ($is == 'kayit_ol') {
+        $ad_soyad = $_POST['ad_soyad'];
+        $kadi = $_POST['kullanici_adi'];
+        $email = $_POST['email'];
+        $sifre = $_POST['sifre'];
+
+        $ekle = $conn->prepare("INSERT INTO kullanicilar (ad_soyad, kullanici_adi, email, sifre, rol) VALUES (?, ?, ?, ?, 'danışan')");
+        $ekle->execute([$ad_soyad, $kadi, $email, $sifre]);
+        header("Location: index.php?kayit=basarili");
+        exit();
+    }
+
+    // --- 4. VERİLERİ KAYDET (DANIŞAN PANELİ) ---
     elseif ($is == 'verileri_kaydet') {
-        if (!isset($_SESSION['user_id'])) { die("Oturum hatası!"); }
-        
         $user_id = $_SESSION['user_id'];
-        $tarih   = date('Y-m-d');
-        
-        $chk = $conn->prepare("SELECT id FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
-        $chk->execute([$user_id, $tarih]);
-        if($chk->fetch()) {
-            header("Location: panel.php?hata=zaten_kayitli");
-            exit();
-        }
-
-        $sorgu = $conn->prepare("INSERT INTO aktivite_kayitlari (user_id, alinan_kalori, yakilan_kalori, su_miktari, uyku_suresi, guncel_kilo, spor_suresi, kayit_tarihi) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $sorgu->execute([$user_id, $_POST['alinan_kalori'], $_POST['yakilan_kalori'], $_POST['su_miktari'], $_POST['uyku_suresi'], $_POST['guncel_kilo'], $_POST['spor_suresi'], $tarih]);
-        
-        // --- ROZET SİSTEMİ TETİKLEYİCİ ---
-        include_once 'rozet_fonksiyonu.php';
-        $yeni_rozet = null;
-        
-        // Kazanılan rozetleri kontrol et ve ismini yakala
-        $r1 = rozetKontrolEt($conn, $user_id, 'su', $_POST['su_miktari']);
-        $r2 = rozetKontrolEt($conn, $user_id, 'uyku', $_POST['uyku_suresi']);
-        $r3 = rozetKontrolEt($conn, $user_id, 'spor', $_POST['spor_suresi']);
-
-        if ($r1) $yeni_rozet = $r1;
-        elseif ($r2) $yeni_rozet = $r2;
-        elseif ($r3) $yeni_rozet = $r3;
-
-        // Rozet kazanıldıysa animasyon için URL'ye ekle
-        if ($yeni_rozet) {
-            header("Location: panel.php?durum=ok&yeni_rozet=" . urlencode($yeni_rozet));
-        } else {
-            header("Location: panel.php?durum=ok");
-        }
-        exit();
-    }
-
-    // --- 3. UZMAN ATAMA ---
-    elseif ($is == 'uzman_atama') {
-        if (!isset($_SESSION['user_id'])) { die("Oturum hatası!"); }
-        $danisan_id = $_SESSION['user_id'];
-        $uzman_id = intval($_GET['uzman_id']);
-        $rol = trim(strtolower($_GET['rol']));
-
-        $kontrol = $conn->prepare("SELECT id FROM uzman_danisan_eslesmeleri WHERE danisan_id = ? AND uzman_rol = ?");
-        $kontrol->execute([$danisan_id, $rol]);
-
-        if ($kontrol->rowCount() > 0) {
-            $sql = $conn->prepare("UPDATE uzman_danisan_eslesmeleri SET uzman_id = ? WHERE danisan_id = ? AND uzman_rol = ?");
-            $sql->execute([$uzman_id, $danisan_id, $rol]);
-        } else {
-            $sql = $conn->prepare("INSERT INTO uzman_danisan_eslesmeleri (danisan_id, uzman_id, uzman_rol) VALUES (?, ?, ?)");
-            $sql->execute([$danisan_id, $uzman_id, $rol]);
-        }
-
-        header("Location: panel.php?durum=uzman_secildi");
-        exit();
-    }
-
-    // --- 4. VERİ GÜNCELLEME VE SİLME ---
-    elseif ($is == 'guncelle') {
-        if (!isset($_SESSION['user_id'])) { die("Oturum hatası!"); }
-        $user_id = $_SESSION['user_id'];
+        $su = $_POST['su_miktari'];
+        $uyku = $_POST['uyku_suresi'];
+        $alinan = $_POST['alinan_kalori'];
+        $yakilan = $_POST['yakilan_kalori'];
+        $spor = $_POST['spor_suresi'];
+        $kilo = $_POST['guncel_kilo'];
         $tarih = date('Y-m-d');
-        
-        $sorgu = $conn->prepare("UPDATE aktivite_kayitlari SET alinan_kalori=?, yakilan_kalori=?, su_miktari=?, uyku_suresi=?, guncel_kilo=?, spor_suresi=? WHERE user_id=? AND kayit_tarihi=?");
-        $sorgu->execute([$_POST['alinan_kalori'], $_POST['yakilan_kalori'], $_POST['su_miktari'], $_POST['uyku_suresi'], $_POST['guncel_kilo'], $_POST['spor_suresi'], $user_id, $tarih]);
-        
-        include_once 'rozet_fonksiyonu.php';
-        $yeni_rozet = null;
-        $r1 = rozetKontrolEt($conn, $user_id, 'su', $_POST['su_miktari']);
-        $r2 = rozetKontrolEt($conn, $user_id, 'uyku', $_POST['uyku_suresi']);
-        $r3 = rozetKontrolEt($conn, $user_id, 'spor', $_POST['spor_suresi']);
 
-        if ($r1) $yeni_rozet = $r1;
-        elseif ($r2) $yeni_rozet = $r2;
-        elseif ($r3) $yeni_rozet = $r3;
-
-        if ($yeni_rozet) {
-            header("Location: panel.php?durum=guncellendi&yeni_rozet=" . urlencode($yeni_rozet));
-        } else {
-            header("Location: panel.php?durum=guncellendi");
-        }
+        $ekle = $conn->prepare("INSERT INTO aktivite_kayitlari (user_id, su_miktari, uyku_suresi, alinan_kalori, yakilan_kalori, spor_suresi, guncel_kilo, kayit_tarihi) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $ekle->execute([$user_id, $su, $uyku, $alinan, $yakilan, $spor, $kilo, $tarih]);
+        header("Location: panel.php?kayit=tamam");
         exit();
     }
 
-    elseif ($is == 'kayit_sil') {
-        $conn->prepare("DELETE FROM aktivite_kayitlari WHERE id = ? AND user_id = ?")->execute([$_GET['id'], $_SESSION['user_id']]);
-        header("Location: panel.php?sil=ok");
+    // --- 5. UZMAN ATAMA (DANIŞANIN UZMAN SEÇMESİ) ---
+    elseif ($is == 'uzman_atama') {
+        $danisan_id = $_SESSION['user_id'];
+        $uzman_id = $_GET['uzman_id'];
+        $rol = $_GET['rol'];
+
+        // Önce eski eşleşmeyi sil (Tek uzman kuralı için)
+        $sil = $conn->prepare("DELETE FROM uzman_danisan_eslesmeleri WHERE danisan_id = ? AND uzman_rol = ?");
+        $sil->execute([$danisan_id, $rol]);
+
+        $ekle = $conn->prepare("INSERT INTO uzman_danisan_eslesmeleri (danisan_id, uzman_id, uzman_rol) VALUES (?, ?, ?)");
+        $ekle->execute([$danisan_id, $uzman_id, $rol]);
+        header("Location: panel.php?atama=basarili");
         exit();
     }
 
-    // --- 5. BİLDİRİM OKUMA VE PLAN YAZMA ---
-    elseif ($is == 'mesaj_oku') {
-        $tablo = ($_GET['tip'] == 'diyet') ? 'beslenme_planlari' : 'egzersiz_planlari';
-        $conn->prepare("UPDATE $tablo SET okundu = 1 WHERE user_id = ?")->execute([$_SESSION['user_id']]);
-        header("Location: " . ($_GET['tip'] == 'diyet' ? 'beslenme.php' : 'egzersiz.php'));
-        exit();
-    }
-    
+    // --- 6. UZMANIN PLAN YAZMASI ---
     elseif ($is == 'plan_yaz') {
-        $conn->prepare("INSERT INTO beslenme_planlari (user_id, diyetisyen_id, plan_metni, okundu, kayit_tarihi) VALUES (?, ?, ?, 0, NOW())")
-              ->execute([$_POST['danisan_id'], $_SESSION['user_id'], $_POST['plan_metni']]);
-        header("Location: diyetisyen_paneli.php?durum=mesaj_gonderildi");
-        exit();
-    }
+        $uzman_id = $_SESSION['user_id'];
+        $danisan_id = $_POST['danisan_id'];
+        $plan = $_POST['plan_metni'];
+        $rol = $_SESSION['rol'];
 
-    elseif ($is == 'egzersiz_yaz') {
-        $conn->prepare("INSERT INTO egzersiz_planlari (user_id, hoca_id, antrenman_notu, okundu, kayit_tarihi) VALUES (?, ?, ?, 0, NOW())")
-              ->execute([$_POST['danisan_id'], $_SESSION['user_id'], $_POST['antrenman_notu']]);
-        header("Location: hoca_paneli.php?durum=ok");
-        exit();
-    }
-
-    // --- 6. TARİF VE ANTRENMAN DUYURULARI ---
-    elseif ($is == 'tarif_kaydet') {
-        $diyetisyen_id = $_SESSION['user_id'];
-        $baslik = $_POST['tarif_baslik'];
-        $icerik = $_POST['tarif_icerik'];
-        
-        $conn->prepare("INSERT INTO gunun_tarifi (diyetisyen_id, tarif_baslik, tarif_icerik, ekleme_tarihi) VALUES (?, ?, ?, NOW())")
-              ->execute([$diyetisyen_id, $baslik, $icerik]);
-        
-        $danisanlar = $conn->prepare("SELECT danisan_id FROM uzman_danisan_eslesmeleri WHERE uzman_id = ? AND uzman_rol = 'diyetisyen'");
-        $danisanlar->execute([$diyetisyen_id]);
-        $liste = $danisanlar->fetchAll(PDO::FETCH_COLUMN);
-        
-        $mesaj = "🥗 YENİ TARİF: " . $baslik . "\n\n" . $icerik;
-        foreach ($liste as $danisan_id) {
-            $conn->prepare("INSERT INTO beslenme_planlari (user_id, diyetisyen_id, plan_metni, okundu, kayit_tarihi) VALUES (?, ?, ?, 0, NOW())")
-                  ->execute([$danisan_id, $diyetisyen_id, $mesaj]);
+        if ($rol == 'diyetisyen') {
+            $sorgu = $conn->prepare("INSERT INTO beslenme_planlari (user_id, diyetisyen_id, plan_notu) VALUES (?, ?, ?)");
+        } else {
+            $sorgu = $conn->prepare("INSERT INTO egzersiz_planlari (user_id, hoca_id, egzersiz_notu) VALUES (?, ?, ?)");
         }
-        header("Location: diyetisyen_paneli.php?durum=tarif_ok");
+        $sorgu->execute([$danisan_id, $uzman_id, $plan]);
+        header("Location: " . $rol . "_paneli.php?islem=basarili");
         exit();
     }
 
-    elseif ($is == 'antrenman_duyuru_kaydet') {
-        $hoca_id = $_SESSION['user_id'];
-        $baslik = $_POST['duyuru_baslik'];
-        $icerik = $_POST['duyuru_icerik'];
-
-        $conn->prepare("INSERT INTO gunun_antrenmani (hoca_id, duyuru_baslik, duyuru_icerik) VALUES (?, ?, ?)")
-              ->execute([$hoca_id, $baslik, $icerik]);
-
-        $sporcular = $conn->prepare("SELECT danisan_id FROM uzman_danisan_eslesmeleri WHERE uzman_id = ? AND uzman_rol = 'hoca'");
-        $sporcular->execute([$hoca_id]);
-        $liste = $sporcular->fetchAll(PDO::FETCH_COLUMN);
-
-        foreach ($liste as $danisan_id) {
-            $conn->prepare("INSERT INTO egzersiz_planlari (user_id, hoca_id, antrenman_notu, okundu, kayit_tarihi) VALUES (?, ?, ?, 0, NOW())")
-                  ->execute([$danisan_id, $hoca_id, "📢 DUYURU: $baslik\n$icerik"]);
-        }
-        header("Location: hoca_paneli.php?durum=ok");
-        exit();
-    }
-
-    // --- 7. PUANLAMA ---
+    // --- 7. TARİFE PUAN VERME ---
     elseif ($is == 'puan_ver') {
-        if (!isset($_SESSION['user_id'])) { die("Oturum hatası!"); }
+        $user_id = $_SESSION['user_id'];
         $tarif_id = $_POST['tarif_id'];
-        $user_id  = $_SESSION['user_id'];
-        $puan     = $_POST['puan'];
+        $puan = $_POST['puan'];
 
         $kontrol = $conn->prepare("SELECT id FROM tarif_puanlari WHERE tarif_id = ? AND user_id = ?");
         $kontrol->execute([$tarif_id, $user_id]);
         
         if ($kontrol->fetch()) {
-            $conn->prepare("UPDATE tarif_puanlari SET puan = ? WHERE tarif_id = ? AND user_id = ?")->execute([$puan, $tarif_id, $user_id]);
+            $guncelle = $conn->prepare("UPDATE tarif_puanlari SET puan = ? WHERE tarif_id = ? AND user_id = ?");
+            $guncelle->execute([$puan, $tarif_id, $user_id]);
         } else {
-            $conn->prepare("INSERT INTO tarif_puanlari (tarif_id, user_id, puan) VALUES (?, ?, ?)")->execute([$tarif_id, $user_id, $puan]);
+            $ekle = $conn->prepare("INSERT INTO tarif_puanlari (tarif_id, user_id, puan) VALUES (?, ?, ?)");
+            $ekle->execute([$tarif_id, $user_id, $puan]);
         }
-        header("Location: panel.php?puan=ok");
+        header("Location: panel.php?puan=verildi");
         exit();
     }
 
-    // --- 8. ADMİN İŞLEMLERİ ---
+    // --- 8. ADMIN BAŞVURU ONAY/RED ---
     elseif ($is == 'onayla') {
         $conn->prepare("UPDATE uzman_basvurulari SET durum = 'onaylandi' WHERE id = ?")->execute([$_GET['id']]);
         header("Location: basvuru_yonetim.php?durum=onaylandi");
@@ -244,14 +163,48 @@ try {
             $sorgu = $conn->prepare("UPDATE kullanicilar SET ad_soyad=?, kullanici_adi=?, email=? WHERE id=?");
             $sorgu->execute([$ad_soyad, $kadi, $email, $user_id]);
         }
-
-        $_SESSION['ad_soyad'] = $ad_soyad;
         header("Location: profil.php?durum=ok");
         exit();
     }
 
-} catch (PDOException $e) { 
-    die("Sistem Hatası: " . $e->getMessage()); 
+    // --- 10. PREMIUM: UZMANA SORU SORMA ---
+    elseif ($is == 'soru_sor') {
+        $danisan_id = $_SESSION['user_id'];
+        $uzman_id = $_POST['uzman_id'];
+        $soru = $_POST['soru_metni'];
+
+        if(!empty($uzman_id) && !empty($soru)) {
+            $ekle = $conn->prepare("INSERT INTO uzman_sorulari (danisan_id, uzman_id, soru_metni) VALUES (?, ?, ?)");
+            $ekle->execute([$danisan_id, $uzman_id, $soru]);
+            header("Location: panel.php?durum=soru_gonderildi");
+        } else {
+            header("Location: panel.php?durum=hata");
+        }
+        exit();
+    }
+
+    // --- 11. UZMAN: SORUYU CEVAPLAMA ---
+    elseif ($is == 'cevapla') {
+        $soru_id = $_POST['soru_id'];
+        $cevap = $_POST['cevap_metni'];
+
+        if(!empty($soru_id) && !empty($cevap)) {
+            $guncelle = $conn->prepare("UPDATE uzman_sorulari SET cevap_metni = ?, durum = 'cevaplandi' WHERE id = ?");
+            $guncelle->execute([$cevap, $soru_id]);
+            
+            $rol = $_SESSION['rol'];
+            if($rol == 'diyetisyen') {
+                header("Location: diyetisyen_paneli.php?durum=cevaplandi");
+            } else {
+                header("Location: hoca_paneli.php?durum=cevaplandi");
+            }
+        } else {
+            header("Location: panel.php?durum=hata");
+        }
+        exit();
+    }
+
+} catch (PDOException $e) {
+    die("İşlem hatası: " . $e->getMessage());
 }
-ob_end_flush();
 ?>
