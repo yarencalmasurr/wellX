@@ -121,20 +121,32 @@ try {
     }
 
     // --- 6. UZMANIN PLAN YAZMASI ---
+    
     elseif ($is == 'plan_yaz') {
         $uzman_id = $_SESSION['user_id'];
         $danisan_id = $_POST['danisan_id'];
         $plan = $_POST['plan_metni'];
         $rol = $_SESSION['rol'];
 
-        if ($rol == 'diyetisyen') {
-            $sorgu = $conn->prepare("INSERT INTO beslenme_planlari (user_id, diyetisyen_id, plan_notu) VALUES (?, ?, ?)");
-        } else {
-            $sorgu = $conn->prepare("INSERT INTO egzersiz_planlari (user_id, hoca_id, egzersiz_notu) VALUES (?, ?, ?)");
+        try {
+            if ($rol == 'diyetisyen') {
+                // Diyetisyen tablosu kontrol edildi: plan_metni
+                $sorgu = $conn->prepare("INSERT INTO beslenme_planlari (user_id, diyetisyen_id, plan_metni) VALUES (?, ?, ?)");
+            } else {
+                // Hoca tablosu (HATA BURADAYDI): 
+                // Eğer egzersiz_notu hata veriyorsa, veritabanındaki ismin ne olduğunu buraya yazmalısın.
+                // Senin paylaştığın image_8e66b9.jpg'de sütun adı 'egzersiz_notu' görünüyordu.
+                $sorgu = $conn->prepare("INSERT INTO egzersiz_planlari (user_id, hoca_id, egzersiz_notu) VALUES (?, ?, ?)");
+            }
+            
+            $sorgu->execute([$danisan_id, $uzman_id, $plan]);
+            header("Location: " . $rol . "_paneli.php?islem=basarili");
+            exit();
+
+        } catch (PDOException $e) {
+            // Hatanın tam olarak nerede olduğunu anlamak için geçici bir hata mesajı:
+            die("SQL Hatası: " . $e->getMessage() . " | Rol: " . $rol);
         }
-        $sorgu->execute([$danisan_id, $uzman_id, $plan]);
-        header("Location: " . $rol . "_paneli.php?islem=basarili");
-        exit();
     }
 
     // --- 7. TARİFE PUAN VERME ---
