@@ -70,6 +70,7 @@ try {
         .btn { background: var(--accent); color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-weight: 600; width: 100%; transition: 0.3s; }
         .btn:hover { background: #2980b9; transform: translateY(-2px); }
         .tarif-box { background: #ebf5fb; border: 1px dashed var(--accent); }
+        .son-kayit { background: #f8fafc; padding: 15px; border-radius: 10px; margin-top: 10px; border-left: 4px solid var(--accent); font-size: 14px; }
     </style>
 </head>
 <body>
@@ -84,22 +85,27 @@ try {
 </div>
 
 <div class="main">
-    <?php if(isset($_GET['durum'])): ?>
+    <?php if(isset($_GET['paylasim']) && $_GET['paylasim'] == 'basarili'): ?>
         <div class="alert" style="background:#d1fae5; color:#065f46; margin-bottom:20px; padding:15px; text-transform:none; font-size:14px;">
-            <?php 
-                if($_GET['durum'] == 'ok') echo "✅ İşlem başarıyla tamamlandı.";
-                if($_GET['durum'] == 'hata') echo "❌ Bir hata oluştu.";
-            ?>
+            ✅ Duyuru başarıyla yayınlandı.
         </div>
     <?php endif; ?>
 
     <div class="card tarif-box">
         <h3>📢 Günün Antrenman Duyurusunu Paylaş</h3>
-        <form action="islem_v2.php?is=antrenman_duyuru_kaydet" method="POST">
-            <input type="text" name="duyuru_baslik" placeholder="Başlık (Örn: Kardiyo Günü)" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px; box-sizing:border-box;">
-            <textarea name="duyuru_icerik" placeholder="Tüm sporcularınızın göreceği genel not..." required></textarea>
+        <form action="islem_v2.php?is=antrenman_paylas" method="POST">
+            <input type="text" name="antrenman_baslik" placeholder="Başlık (Örn: Kardiyo Günü)" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px; box-sizing:border-box;">
+            <textarea name="antrenman_icerik" placeholder="Tüm sporcularınızın göreceği genel not..." required></textarea>
             <button type="submit" class="btn" style="background:var(--primary);">Duyuruyu Yayınla</button>
         </form>
+
+        <?php if($son_duyuru): ?>
+            <div class="son-kayit">
+                <strong>Paylaşılan Son Duyuru:</strong><br>
+                <em><?php echo htmlspecialchars($son_duyuru['antrenman_baslik']); ?></em>: 
+                <?php echo htmlspecialchars($son_duyuru['antrenman_icerik']); ?>
+            </div>
+        <?php endif; ?>
     </div>
 
     <h1>Size Bağlı Sporcular</h1>
@@ -118,10 +124,22 @@ try {
                         <span class="alert">⚠️ Hedef Altı</span>
                     <?php endif; ?>
                     </p>
+
+                    <?php 
+                        $not_sorgu = $conn->prepare("SELECT antrenman_notu FROM egzersiz_planlari WHERE user_id = ? AND hoca_id = ? ORDER BY id DESC LIMIT 1");
+                        $not_sorgu->execute([$d['id'], $hoca_id]);
+                        $son_not = $not_sorgu->fetch();
+                        if($son_not):
+                    ?>
+                        <div class="son-kayit" style="border-left-color: #2ecc71; margin-bottom: 10px;">
+                            <strong>Gönderilen Son Program:</strong><br>
+                            <?php echo htmlspecialchars($son_not['antrenman_notu']); ?>
+                        </div>
+                    <?php endif; ?>
                     
                     <form action="islem_v2.php?is=egzersiz_yaz" method="POST">
                         <input type="hidden" name="danisan_id" value="<?php echo $d['id']; ?>">
-                        <textarea name="antrenman_notu" placeholder="<?php echo $d['ad_soyad']; ?> için özel antrenman programı..." required></textarea>
+                        <textarea name="plan_metni" placeholder="<?php echo $d['ad_soyad']; ?> için özel antrenman programı..." required></textarea>
                         <button type="submit" class="btn">Notu Gönder</button>
                     </form>
                 </div>

@@ -1,4 +1,7 @@
 <?php
+error_reporting(E_ALL); 
+ini_set('display_errors', 1);
+
 /**
  * Proje: saglik_portali
  * Dosya: islem_v2.php
@@ -65,7 +68,7 @@ try {
         exit();
     }
 
-    // --- 4. VERİLERİ KAYDET VEYA GÜNCELLE (DANIŞAN PANELİ) ---
+    // --- 4. VERİLERİ KAYDET VEYA GÜNCELLE ---
     elseif ($is == 'verileri_kaydet') {
         $user_id = $_SESSION['user_id'];
         $su = $_POST['su_miktari'];
@@ -98,32 +101,21 @@ try {
     }
 
     // --- 6. UZMANIN PLAN YAZMASI ---
-    
     elseif ($is == 'plan_yaz') {
         $uzman_id = $_SESSION['user_id'];
         $danisan_id = $_POST['danisan_id'];
         $plan = $_POST['plan_metni'];
         $rol = $_SESSION['rol'];
 
-        try {
-            if ($rol == 'diyetisyen') {
-                // Diyetisyen tablosu kontrol edildi: plan_metni
-                $sorgu = $conn->prepare("INSERT INTO beslenme_planlari (user_id, diyetisyen_id, plan_metni) VALUES (?, ?, ?)");
-            } else {
-                // Hoca tablosu (HATA BURADAYDI): 
-                // Eğer egzersiz_notu hata veriyorsa, veritabanındaki ismin ne olduğunu buraya yazmalısın.
-                // Senin paylaştığın image_8e66b9.jpg'de sütun adı 'egzersiz_notu' görünüyordu.
-                $sorgu = $conn->prepare("INSERT INTO egzersiz_planlari (user_id, hoca_id, egzersiz_notu) VALUES (?, ?, ?)");
-            }
-            
-            $sorgu->execute([$danisan_id, $uzman_id, $plan]);
-            header("Location: " . $rol . "_paneli.php?islem=basarili");
-            exit();
-
-        } catch (PDOException $e) {
-            // Hatanın tam olarak nerede olduğunu anlamak için geçici bir hata mesajı:
-            die("SQL Hatası: " . $e->getMessage() . " | Rol: " . $rol);
+        if ($rol == 'diyetisyen') {
+            $sorgu = $conn->prepare("INSERT INTO beslenme_planlari (user_id, diyetisyen_id, plan_metni) VALUES (?, ?, ?)");
+        } else {
+            // Görseline (image_8e66b9.jpg) göre antrenman_notu
+            $sorgu = $conn->prepare("INSERT INTO egzersiz_planlari (user_id, hoca_id, antrenman_notu) VALUES (?, ?, ?)");
         }
+        $sorgu->execute([$danisan_id, $uzman_id, $plan]);
+        header("Location: " . $rol . "_paneli.php?islem=basarili");
+        exit();
     }
 
     // --- 7. TARİFE PUAN VERME ---
@@ -131,10 +123,8 @@ try {
         $user_id = $_SESSION['user_id'];
         $tarif_id = $_POST['tarif_id'];
         $puan = $_POST['puan'];
-
         $kontrol = $conn->prepare("SELECT id FROM tarif_puanlari WHERE tarif_id = ? AND user_id = ?");
         $kontrol->execute([$tarif_id, $user_id]);
-        
         if ($kontrol->fetch()) {
             $guncelle = $conn->prepare("UPDATE tarif_puanlari SET puan = ? WHERE tarif_id = ? AND user_id = ?");
             $guncelle->execute([$puan, $tarif_id, $user_id]);
@@ -160,7 +150,6 @@ try {
 
     // --- 9. PROFİL GÜNCELLEME ---
     elseif ($is == 'profil_guncelle') {
-        if (!isset($_SESSION['user_id'])) { die("Oturum hatası!"); }
         $user_id = $_SESSION['user_id'];
         $ad_soyad = $_POST['ad_soyad'];
         $kadi = $_POST['kullanici_adi'];
@@ -183,7 +172,6 @@ try {
         $danisan_id = $_SESSION['user_id'];
         $uzman_id = $_POST['uzman_id'];
         $soru = $_POST['soru_metni'];
-
         if(!empty($uzman_id) && !empty($soru)) {
             $ekle = $conn->prepare("INSERT INTO uzman_sorulari (danisan_id, uzman_id, soru_metni) VALUES (?, ?, ?)");
             $ekle->execute([$danisan_id, $uzman_id, $soru]);
@@ -198,49 +186,27 @@ try {
     elseif ($is == 'cevapla') {
         $soru_id = $_POST['soru_id'];
         $cevap = $_POST['cevap_metni'];
-
-        if(!empty($soru_id) && !empty($cevap)) {
-            $guncelle = $conn->prepare("UPDATE uzman_sorulari SET cevap_metni = ?, durum = 'cevaplandi' WHERE id = ?");
-            $guncelle->execute([$cevap, $soru_id]);
-            
-            $rol = $_SESSION['rol'];
-            if($rol == 'diyetisyen') {
-                header("Location: diyetisyen_paneli.php?durum=cevaplandi");
-            } else {
-                header("Location: hoca_paneli.php?durum=cevaplandi");
-            }
-        } else {
-            header("Location: panel.php?durum=hata");
-        }
+        $guncelle = $conn->prepare("UPDATE uzman_sorulari SET cevap_metni = ?, durum = 'cevaplandi' WHERE id = ?");
+        $guncelle->execute([$cevap, $soru_id]);
+        $rol = $_SESSION['rol'];
+        header("Location: " . $rol . "_paneli.php?durum=cevaplandi");
         exit();
     }
 
     // --- 12. PREMIUM: FOTOĞRAF YÜKLEME ---
     elseif ($is == 'foto_yukle') {
         $user_id = $_SESSION['user_id'];
-        
         if (isset($_FILES['form_foto']) && $_FILES['form_foto']['error'] == 0) {
             $dosya = $_FILES['form_foto'];
             $dizin = "uploads/form_fotolar/";
-            
             if (!file_exists($dizin)) { mkdir($dizin, 0777, true); }
-
             $uzanti = strtolower(pathinfo($dosya['name'], PATHINFO_EXTENSION));
-            $izinli = ['jpg','jpeg','png','webp'];
-
-            if(!in_array($uzanti, $izinli)){
-                die("Geçersiz dosya formatı.");
-            }
-
             $yeni_ad = time() . "_" . rand(1000,9999) . "." . $uzanti;
             $hedef = $dizin . $yeni_ad;
-
             if (move_uploaded_file($dosya['tmp_name'], $hedef)) {
-                $ekle = $conn->prepare("INSERT INTO gelisim_fotograflari (user_id, foto_yolu, aciklama, yuklenme_tarihi) VALUES (?, ?, ?, NOW())");
-                $ekle->execute([$user_id, $hedef, '']); 
+                $ekle = $conn->prepare("INSERT INTO gelisim_fotograflari (user_id, foto_yolu, aciklama, yuklenme_tarihi) VALUES (?, ?, '', NOW())");
+                $ekle->execute([$user_id, $hedef]);
                 header("Location: gelisim.php?yukleme=basarili");
-            } else {
-                die("Dosya taşıma hatası.");
             }
         }
         exit();
@@ -250,35 +216,28 @@ try {
     elseif ($is == 'foto_sil') {
         $foto_id = $_GET['id'];
         $user_id = $_SESSION['user_id'];
-
         $sorgu = $conn->prepare("SELECT foto_yolu FROM gelisim_fotograflari WHERE id = ? AND user_id = ?");
         $sorgu->execute([$foto_id, $user_id]);
         $foto = $sorgu->fetch();
-
         if ($foto) {
-            if (file_exists($foto['foto_yolu'])) {
-                unlink($foto['foto_yolu']);
-            }
+            if (file_exists($foto['foto_yolu'])) { unlink($foto['foto_yolu']); }
             $conn->prepare("DELETE FROM gelisim_fotograflari WHERE id = ?")->execute([$foto_id]);
-            header("Location: gelisim.php?silme=basarili");
         }
+        header("Location: gelisim.php?silme=basarili");
         exit();
     }
 
-    // --- 14. HIZLI VERİ GÜNCELLEME (TEKİL) ---
+    // --- 14. HIZLI VERİ GÜNCELLEME ---
     elseif ($is == 'hizli_guncelle') {
         $user_id = $_SESSION['user_id'];
         $alan = $_POST['alan']; 
         $deger = $_POST['deger'];
         $tarih = date('Y-m-d');
-
         $izinli = ['su_miktari', 'uyku_suresi', 'alinan_kalori', 'yakilan_kalori', 'spor_suresi', 'guncel_kilo'];
-        if (!in_array($alan, $izinli)) { die("Hata: Yetkisiz alan!"); }
-
+        if (!in_array($alan, $izinli)) { die("Yetkisiz alan!"); }
         $kontrol = $conn->prepare("SELECT id FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
         $kontrol->execute([$user_id, $tarih]);
         $mevcut = $kontrol->fetch();
-
         if ($mevcut) {
             $sorgu = $conn->prepare("UPDATE aktivite_kayitlari SET $alan = ? WHERE id = ?");
             $sorgu->execute([$deger, $mevcut['id']]);
@@ -287,6 +246,40 @@ try {
             $sorgu->execute([$user_id, $deger, $tarih]);
         }
         header("Location: panel.php?durum=guncellendi");
+        exit();
+    }
+
+    // --- 15. SPOR HOCASI: GÜNÜN ANTRENMANINI PAYLAŞ ---
+    elseif ($is == 'antrenman_paylas') {
+        $hoca_id = $_SESSION['user_id'];
+        
+        // Formdan gelen veriler
+        $baslik = $_POST['antrenman_baslik'];
+        $icerik = $_POST['antrenman_icerik'];
+
+        // image_8d097f.jpg görselindeki sütun isimlerine göre birebir düzenlendi:
+        $sorgu = $conn->prepare("INSERT INTO gunun_antrenmani (hoca_id, antrenman_baslik, antrenman_icerik) VALUES (?, ?, ?)");
+        
+        try {
+            $sorgu->execute([$hoca_id, $baslik, $icerik]);
+            header("Location: hoca_paneli.php?durum=ok");
+            exit();
+        } catch (PDOException $e) {
+            // Eğer hala hata varsa beyaz ekran yerine hatayı yazdırır
+            die("Veritabanı Kayıt Hatası: " . $e->getMessage());
+        }
+    }
+    // --- 16. SPOR HOCASI: EGZERSİZ PLANI YAZMA ---
+    if ($is == 'egzersiz_yaz') {
+        $danisan_id = $_POST['danisan_id'];
+        $plan = $_POST['plan_metni']; // Hoca panelindeki textarea name="plan_metni" ise
+        $uzman_id = $_SESSION['user_id'];
+
+        // Hoca tablosu ve senin sütun adın: antrenman_notu
+        $sorgu = $conn->prepare("INSERT INTO egzersiz_planlari (user_id, hoca_id, antrenman_notu) VALUES (?, ?, ?)");
+        $sorgu->execute([$danisan_id, $uzman_id, $plan]);
+        
+        header("Location: hoca_paneli.php?durum=ok");
         exit();
     }
 
