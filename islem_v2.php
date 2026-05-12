@@ -65,7 +65,7 @@ try {
         exit();
     }
 
-    // --- 4. VERİLERİ KAYDET (DANIŞAN PANELİ) ---
+    // --- 4. VERİLERİ KAYDET VEYA GÜNCELLE (DANIŞAN PANELİ) ---
     elseif ($is == 'verileri_kaydet') {
         $user_id = $_SESSION['user_id'];
         $su = $_POST['su_miktari'];
@@ -76,9 +76,32 @@ try {
         $kilo = $_POST['guncel_kilo'];
         $tarih = date('Y-m-d');
 
-        $ekle = $conn->prepare("INSERT INTO aktivite_kayitlari (user_id, su_miktari, uyku_suresi, alinan_kalori, yakilan_kalori, spor_suresi, guncel_kilo, kayit_tarihi) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $ekle->execute([$user_id, $su, $uyku, $alinan, $yakilan, $spor, $kilo, $tarih]);
-        header("Location: panel.php?kayit=tamam");
+        // Önce bugün kayıt var mı kontrol et
+        $kontrol = $conn->prepare("SELECT id FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
+        $kontrol->execute([$user_id, $tarih]);
+        $mevcut = $kontrol->fetch();
+
+        if ($mevcut) {
+            // KAYIT VARSA GÜNCELLE (UPDATE)
+            $sorgu = $conn->prepare("
+                UPDATE aktivite_kayitlari 
+                SET su_miktari = ?, uyku_suresi = ?, alinan_kalori = ?, yakilan_kalori = ?, spor_suresi = ?, guncel_kilo = ? 
+                WHERE id = ?
+            ");
+            $sorgu->execute([$su, $uyku, $alinan, $yakilan, $spor, $kilo, $mevcut['id']]);
+            $mesaj = "guncellendi";
+        } else {
+            // KAYIT YOKSA YENİ EKLE (INSERT)
+            $sorgu = $conn->prepare("
+                INSERT INTO aktivite_kayitlari 
+                (user_id, su_miktari, uyku_suresi, alinan_kalori, yakilan_kalori, spor_suresi, guncel_kilo, kayit_tarihi) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            $sorgu->execute([$user_id, $su, $uyku, $alinan, $yakilan, $spor, $kilo, $tarih]);
+            $mesaj = "tamam";
+        }
+        
+        header("Location: panel.php?kayit=" . $mesaj);
         exit();
     }
 
@@ -203,7 +226,7 @@ try {
         exit();
     }
 
-    // --- 12. PREMIUM: FOTOĞRAF YÜKLEME (Senin foto_yukle.php mantığınla) ---
+    // --- 12. PREMIUM: FOTOĞRAF YÜKLEME ---
     elseif ($is == 'foto_yukle') {
         $user_id = $_SESSION['user_id'];
         
@@ -220,7 +243,6 @@ try {
                 die("Geçersiz dosya formatı.");
             }
 
-            // foto_yukle.php dosendaki isimlendirme mantığı
             $yeni_ad = time() . "_" . rand(1000,9999) . "." . $uzanti;
             $hedef = $dizin . $yeni_ad;
 
@@ -251,6 +273,31 @@ try {
             $conn->prepare("DELETE FROM gelisim_fotograflari WHERE id = ?")->execute([$foto_id]);
             header("Location: gelisim.php?silme=basarili");
         }
+        exit();
+    }
+
+    // --- 14. HIZLI VERİ GÜNCELLEME (TEKİL) ---
+    elseif ($is == 'hizli_guncelle') {
+        $user_id = $_SESSION['user_id'];
+        $alan = $_POST['alan']; 
+        $deger = $_POST['deger'];
+        $tarih = date('Y-m-d');
+
+        $izinli = ['su_miktari', 'uyku_suresi', 'alinan_kalori', 'yakilan_kalori', 'spor_suresi', 'guncel_kilo'];
+        if (!in_array($alan, $izinli)) { die("Hata: Yetkisiz alan!"); }
+
+        $kontrol = $conn->prepare("SELECT id FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
+        $kontrol->execute([$user_id, $tarih]);
+        $mevcut = $kontrol->fetch();
+
+        if ($mevcut) {
+            $sorgu = $conn->prepare("UPDATE aktivite_kayitlari SET $alan = ? WHERE id = ?");
+            $sorgu->execute([$deger, $mevcut['id']]);
+        } else {
+            $sorgu = $conn->prepare("INSERT INTO aktivite_kayitlari (user_id, $alan, kayit_tarihi) VALUES (?, ?, ?)");
+            $sorgu->execute([$user_id, $deger, $tarih]);
+        }
+        header("Location: panel.php?durum=guncellendi");
         exit();
     }
 
