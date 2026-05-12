@@ -16,10 +16,10 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// Kullanıcı Verilerini Çek
-$sorgu = $conn->prepare("SELECT * FROM kullanicilar WHERE id = ?");
-$sorgu->execute([$user_id]);
-$user_data = $sorgu->fetch(PDO::FETCH_ASSOC);
+// --- HATAYI ÇÖZEN KISIM: Kullanıcı Verilerini Çek ---
+$user_sorgu = $conn->prepare("SELECT * FROM kullanicilar WHERE id = ?");
+$user_sorgu->execute([$user_id]);
+$user_data = $user_sorgu->fetch(PDO::FETCH_ASSOC);
 
 // Güvenlik: Danışan değilse erişimi engelle
 if (!$user_data || ($_SESSION['rol'] != 'danışan' && $_SESSION['rol'] != 'danisan')) {
@@ -59,19 +59,17 @@ if ($gunun_tarifi) {
     $mevcut_puan = $puan_veri['puan'] ?? 0;
 }
 
-// --- İSTATİSTİKLER ---
-$stat_sorgu = $conn->prepare("SELECT SUM(su_miktari) as t_su, SUM(alinan_kalori) as t_alinan, SUM(uyku_suresi) as t_uyku FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
+// --- İSTATİSTİKLER VE KAYIT KONTROLÜ ---
+$stat_sorgu = $conn->prepare("SELECT * FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
 $stat_sorgu->execute([$user_id, $bugun]);
-$veri = $stat_sorgu->fetch(PDO::FETCH_ASSOC);
+$mevcut_kayit = $stat_sorgu->fetch(PDO::FETCH_ASSOC);
 
-$su = $veri['t_su'] ?? 0;
-$alinan = $veri['t_alinan'] ?? 0;
-$uyku = $veri['t_uyku'] ?? 0;
-
-// Kayıt Kontrolü
-$kontrol = $conn->prepare("SELECT id FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
-$kontrol->execute([$user_id, $bugun]);
-$mevcut_kayit = $kontrol->fetch();
+$su = $mevcut_kayit['su_miktari'] ?? 0;
+$alinan = $mevcut_kayit['alinan_kalori'] ?? 0;
+$uyku = $mevcut_kayit['uyku_suresi'] ?? 0;
+$yakilan = $mevcut_kayit['yakilan_kalori'] ?? 0;
+$spor = $mevcut_kayit['spor_suresi'] ?? 0;
+$kilo = $mevcut_kayit['guncel_kilo'] ?? 0;
 ?>
 
 <!DOCTYPE html>
@@ -222,22 +220,59 @@ $mevcut_kayit = $kontrol->fetch();
     </div>
 
     <div style="background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 15px rgba(0,0,0,0.04);">
-        <h3>➕ Bugünün Verilerini Gir</h3>
+        <h3 class="fw-bold mb-4">➕ Bugünün Verileri</h3>
+
         <?php if ($mevcut_kayit): ?>
-            <div class="alert alert-warning text-center">⚠️ Bugün zaten kayıt yaptınız.</div>
-        <?php else: ?>
+            <div id="kayit_uyari_alani">
+                <div class="alert alert-warning text-center py-3" style="border-radius: 14px; border: none; background: #fffbeb; color: #92400e;">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Bugün zaten kayıt yaptınız.
+                </div>
+                <div class="text-center mt-3">
+                    <button class="btn btn-primary px-4 py-2 shadow-sm" onclick="formuAc()" style="border-radius: 12px; font-weight: 600;">
+                        <i class="fas fa-edit me-2"></i> Günlük Girişi Güncelle
+                    </button>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <div id="veri_formu_alani" style="<?php echo $mevcut_kayit ? 'display:none;' : ''; ?>">
             <form action="islem_v2.php?is=verileri_kaydet" method="POST">
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
-                    <input type="number" step="0.1" name="su_miktari" placeholder="Su (Litre)" required class="form-control">
-                    <input type="number" step="0.1" name="uyku_suresi" placeholder="Uyku (Saat)" required class="form-control">
-                    <input type="number" name="alinan_kalori" placeholder="Alınan Kalori" required class="form-control">
-                    <input type="number" name="yakilan_kalori" placeholder="Yakılan Kalori" required class="form-control">
-                    <input type="number" name="spor_suresi" placeholder="Spor (Dakika)" required class="form-control">
-                    <input type="number" step="0.1" name="guncel_kilo" placeholder="Kilo (kg)" required class="form-control">
+                    <div class="input-group-custom">
+                        <label class="small text-muted mb-1">Su (Litre)</label>
+                        <input type="number" step="0.1" name="su_miktari" value="<?php echo $su; ?>" required class="form-control">
+                    </div>
+                    <div class="input-group-custom">
+                        <label class="small text-muted mb-1">Uyku (Saat)</label>
+                        <input type="number" step="0.1" name="uyku_suresi" value="<?php echo $uyku; ?>" required class="form-control">
+                    </div>
+                    <div class="input-group-custom">
+                        <label class="small text-muted mb-1">Alınan Kalori</label>
+                        <input type="number" name="alinan_kalori" value="<?php echo round($alinan); ?>" required class="form-control">
+                    </div>
+                    <div class="input-group-custom">
+                        <label class="small text-muted mb-1">Yakılan Kalori</label>
+                        <input type="number" name="yakilan_kalori" value="<?php echo round($yakilan); ?>" required class="form-control">
+                    </div>
+                    <div class="input-group-custom">
+                        <label class="small text-muted mb-1">Spor (Dakika)</label>
+                        <input type="number" name="spor_suresi" value="<?php echo $spor; ?>" required class="form-control">
+                    </div>
+                    <div class="input-group-custom">
+                        <label class="small text-muted mb-1">Kilo (kg)</label>
+                        <input type="number" step="0.1" name="guncel_kilo" value="<?php echo $kilo; ?>" required class="form-control">
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary w-100 p-3" style="border-radius:14px; font-weight:600;">Kaydı Sisteme İşle</button>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100 p-3 shadow-sm" style="border-radius:14px; font-weight:600;">
+                        <?php echo $mevcut_kayit ? 'Verilerimi Güncelle' : 'Kaydı Sisteme İşle'; ?>
+                    </button>
+                    <?php if ($mevcut_kayit): ?>
+                        <button type="button" class="btn btn-light p-3" onclick="formuKapat()" style="border-radius:14px;">Vazgeç</button>
+                    <?php endif; ?>
+                </div>
             </form>
-        <?php endif; ?>
+        </div>
     </div>
 </div>
 
@@ -254,7 +289,18 @@ $mevcut_kayit = $kontrol->fetch();
       </div>
     </div>
   </div>
-</div>
+</div>   
+
+<script>
+function formuAc() {
+    document.getElementById('kayit_uyari_alani').style.display = 'none';
+    document.getElementById('veri_formu_alani').style.display = 'block';
+}
+function formuKapat() {
+    document.getElementById('kayit_uyari_alani').style.display = 'block';
+    document.getElementById('veri_formu_alani').style.display = 'none';
+}
+</script>
 
 </body>
 </html>

@@ -65,7 +65,7 @@ try {
         exit();
     }
 
-    // --- 4. VERİLERİ KAYDET (DANIŞAN PANELİ) ---
+    // --- 4. VERİLERİ KAYDET VEYA GÜNCELLE (DANIŞAN PANELİ) ---
     elseif ($is == 'verileri_kaydet') {
         $user_id = $_SESSION['user_id'];
         $su = $_POST['su_miktari'];
@@ -78,28 +78,7 @@ try {
 
         $ekle = $conn->prepare("INSERT INTO aktivite_kayitlari (user_id, su_miktari, uyku_suresi, alinan_kalori, yakilan_kalori, spor_suresi, guncel_kilo, kayit_tarihi) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $ekle->execute([$user_id, $su, $uyku, $alinan, $yakilan, $spor, $kilo, $tarih]);
-
-        include_once 'rozet_fonksiyonu.php';
-
-        $yeni_rozet = null;
-        $rozetler = [
-            rozetKontrolEt($conn, $user_id, 'su', $su),
-            rozetKontrolEt($conn, $user_id, 'uyku', $uyku),
-            rozetKontrolEt($conn, $user_id, 'spor', $spor)
-        ];
-
-        foreach ($rozetler as $rozet) {
-            if ($rozet) {
-                $yeni_rozet = $rozet;
-            }
-        }
-
-        $yonlendirme = "panel.php?kayit=tamam";
-        if ($yeni_rozet) {
-            $yonlendirme .= "&yeni_rozet=" . urlencode($yeni_rozet);
-        }
-
-        header("Location: " . $yonlendirme);
+        header("Location: panel.php?kayit=tamam");
         exit();
     }
 
@@ -119,20 +98,32 @@ try {
     }
 
     // --- 6. UZMANIN PLAN YAZMASI ---
+    
     elseif ($is == 'plan_yaz') {
         $uzman_id = $_SESSION['user_id'];
         $danisan_id = $_POST['danisan_id'];
         $plan = $_POST['plan_metni'];
         $rol = $_SESSION['rol'];
 
-        if ($rol == 'diyetisyen') {
-            $sorgu = $conn->prepare("INSERT INTO beslenme_planlari (user_id, diyetisyen_id, plan_notu) VALUES (?, ?, ?)");
-        } else {
-            $sorgu = $conn->prepare("INSERT INTO egzersiz_planlari (user_id, hoca_id, egzersiz_notu) VALUES (?, ?, ?)");
+        try {
+            if ($rol == 'diyetisyen') {
+                // Diyetisyen tablosu kontrol edildi: plan_metni
+                $sorgu = $conn->prepare("INSERT INTO beslenme_planlari (user_id, diyetisyen_id, plan_metni) VALUES (?, ?, ?)");
+            } else {
+                // Hoca tablosu (HATA BURADAYDI): 
+                // Eğer egzersiz_notu hata veriyorsa, veritabanındaki ismin ne olduğunu buraya yazmalısın.
+                // Senin paylaştığın image_8e66b9.jpg'de sütun adı 'egzersiz_notu' görünüyordu.
+                $sorgu = $conn->prepare("INSERT INTO egzersiz_planlari (user_id, hoca_id, egzersiz_notu) VALUES (?, ?, ?)");
+            }
+            
+            $sorgu->execute([$danisan_id, $uzman_id, $plan]);
+            header("Location: " . $rol . "_paneli.php?islem=basarili");
+            exit();
+
+        } catch (PDOException $e) {
+            // Hatanın tam olarak nerede olduğunu anlamak için geçici bir hata mesajı:
+            die("SQL Hatası: " . $e->getMessage() . " | Rol: " . $rol);
         }
-        $sorgu->execute([$danisan_id, $uzman_id, $plan]);
-        header("Location: " . $rol . "_paneli.php?islem=basarili");
-        exit();
     }
 
     // --- 7. TARİFE PUAN VERME ---
@@ -224,7 +215,7 @@ try {
         exit();
     }
 
-    // --- 12. PREMIUM: FOTOĞRAF YÜKLEME (Senin foto_yukle.php mantığınla) ---
+    // --- 12. PREMIUM: FOTOĞRAF YÜKLEME ---
     elseif ($is == 'foto_yukle') {
         $user_id = $_SESSION['user_id'];
         
@@ -241,7 +232,6 @@ try {
                 die("Geçersiz dosya formatı.");
             }
 
-            // foto_yukle.php dosendaki isimlendirme mantığı
             $yeni_ad = time() . "_" . rand(1000,9999) . "." . $uzanti;
             $hedef = $dizin . $yeni_ad;
 
@@ -272,6 +262,31 @@ try {
             $conn->prepare("DELETE FROM gelisim_fotograflari WHERE id = ?")->execute([$foto_id]);
             header("Location: gelisim.php?silme=basarili");
         }
+        exit();
+    }
+
+    // --- 14. HIZLI VERİ GÜNCELLEME (TEKİL) ---
+    elseif ($is == 'hizli_guncelle') {
+        $user_id = $_SESSION['user_id'];
+        $alan = $_POST['alan']; 
+        $deger = $_POST['deger'];
+        $tarih = date('Y-m-d');
+
+        $izinli = ['su_miktari', 'uyku_suresi', 'alinan_kalori', 'yakilan_kalori', 'spor_suresi', 'guncel_kilo'];
+        if (!in_array($alan, $izinli)) { die("Hata: Yetkisiz alan!"); }
+
+        $kontrol = $conn->prepare("SELECT id FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
+        $kontrol->execute([$user_id, $tarih]);
+        $mevcut = $kontrol->fetch();
+
+        if ($mevcut) {
+            $sorgu = $conn->prepare("UPDATE aktivite_kayitlari SET $alan = ? WHERE id = ?");
+            $sorgu->execute([$deger, $mevcut['id']]);
+        } else {
+            $sorgu = $conn->prepare("INSERT INTO aktivite_kayitlari (user_id, $alan, kayit_tarihi) VALUES (?, ?, ?)");
+            $sorgu->execute([$user_id, $deger, $tarih]);
+        }
+        header("Location: panel.php?durum=guncellendi");
         exit();
     }
 
