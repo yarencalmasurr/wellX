@@ -125,11 +125,12 @@ $mevcut_kayit = $kontrol->fetch();
     <a href="beslenme.php" class="menu-item <?php echo isActive('beslenme.php', $current_page); ?>">🥗 Beslenme</a>
     <a href="egzersiz.php" class="menu-item <?php echo isActive('egzersiz.php', $current_page); ?>">🏋️ Egzersiz</a>
 
-    <?php if($is_premium == 1): ?>
-        <a href="sorularim.php" class="menu-item <?php echo isActive('sorularim.php', $current_page); ?>">
-            <i class="fas fa-envelope-open-text me-2"></i> Uzmana Sorular
-        </a>
-    <?php endif; ?>
+    <a href="sorularim.php" class="menu-item <?php echo isActive('sorularim.php', $current_page); ?>">
+        <i class="fas fa-envelope-open-text me-2"></i> Uzmana Sorular
+        <?php if($is_premium == 0): ?>
+            <i class="fas fa-lock ms-auto" style="font-size: 10px; color: #94a3b8;"></i>
+        <?php endif; ?>
+    </a>
 
     <a href="gelisim.php" class="menu-item <?php echo isActive('gelisim.php', $current_page); ?>">📈 Gelişim</a>
     <a href="rozetlerim.php" class="menu-item <?php echo isActive('rozetlerim.php', $current_page); ?>">🏆 Rozetlerim</a>

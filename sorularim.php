@@ -22,12 +22,6 @@ $user_data = $sorgu->fetch(PDO::FETCH_ASSOC);
 
 $is_premium = $user_data['is_premium'] ?? 0;
 
-// Premium değilse erişimi engelle
-if ($is_premium != 1) {
-    header("Location: panel.php");
-    exit();
-}
-
 $current_page = basename($_SERVER['PHP_SELF']);
 function isActive($page, $current) { return ($page == $current) ? 'active' : ''; }
 ?>
@@ -73,30 +67,42 @@ function isActive($page, $current) { return ($page == $current) ? 'active' : '';
 
     <div class="card-custom" style="border-left: 6px solid var(--orange);">
         <h3 style="font-size: 18px; color: #1e293b; margin-bottom: 20px;"><i class="fas fa-paper-plane" style="color: var(--orange);"></i> Yeni Soru Gönder</h3>
-        <form action="islem_v2.php?is=soru_sor" method="POST">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label small fw-bold">Uzman Seçin</label>
-                    <select name="uzman_id" class="form-select" required style="border-radius: 12px; padding: 12px;">
-                        <option value="">Seçiniz...</option>
-                        <?php
-                        $es_sorgu = $conn->prepare("SELECT ude.uzman_id, k.ad_soyad, k.rol FROM uzman_danisan_eslesmeleri ude JOIN kullanicilar k ON ude.uzman_id = k.id WHERE ude.danisan_id = ?");
-                        $es_sorgu->execute([$user_id]);
-                        while($uzman = $es_sorgu->fetch()) {
-                            echo "<option value='".$uzman['uzman_id']."'>".$uzman['ad_soyad']." (".ucfirst($uzman['rol']).")</option>";
-                        }
-                        ?>
-                    </select>
-                </div>
-                <div class="col-md-8">
-                    <label class="form-label small fw-bold">Sorunuz</label>
-                    <div class="input-group">
-                        <input type="text" name="soru_metni" class="form-control" placeholder="Diyet veya antrenman hakkında ne sormak istersiniz?" required style="border-radius: 12px 0 0 12px; padding: 12px;">
-                        <button type="submit" class="btn btn-warning text-white fw-bold" style="border-radius: 0 12px 12px 0; padding: 0 25px;">Gönder</button>
+        
+        <?php if ($is_premium == 1): ?>
+            <form action="islem_v2.php?is=soru_sor" method="POST">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Uzman Seçin</label>
+                        <select name="uzman_id" class="form-select" required style="border-radius: 12px; padding: 12px;">
+                            <option value="">Seçiniz...</option>
+                            <?php
+                            $es_sorgu = $conn->prepare("SELECT ude.uzman_id, k.ad_soyad, k.rol FROM uzman_danisan_eslesmeleri ude JOIN kullanicilar k ON ude.uzman_id = k.id WHERE ude.danisan_id = ?");
+                            $es_sorgu->execute([$user_id]);
+                            while($uzman = $es_sorgu->fetch()) {
+                                echo "<option value='".$uzman['uzman_id']."'>".$uzman['ad_soyad']." (".ucfirst($uzman['rol']).")</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small fw-bold">Sorunuz</label>
+                        <div class="input-group">
+                            <input type="text" name="soru_metni" class="form-control" placeholder="Diyet veya antrenman hakkında ne sormak istersiniz?" required style="border-radius: 12px 0 0 12px; padding: 12px;">
+                            <button type="submit" class="btn btn-warning text-white fw-bold" style="border-radius: 0 12px 12px 0; padding: 0 25px;">Gönder</button>
+                        </div>
                     </div>
                 </div>
+            </form>
+        <?php else: ?>
+            <div class="premium-lock-overlay text-center p-4" style="background: #fffbeb; border-radius: 16px; border: 1px dashed var(--orange);">
+                <div style="font-size: 30px; margin-bottom: 10px;">🔒</div>
+                <h4 style="font-size: 16px; font-weight: 600; color: #854d0e;">Uzman Desteği Premium Üyelere Özeldir</h4>
+                <p class="small text-muted mb-3">Diyetisyen ve antrenörlerimize soru sormak için planlarımızı inceleyin.</p>
+                <a href="premium_planlar.php" class="btn btn-warning text-white btn-sm fw-bold" style="border-radius: 10px; padding: 8px 20px;">
+                    Premium Edinin
+                </a>
             </div>
-        </form>
+        <?php endif; ?>
     </div>
 
     <div class="card-custom">
