@@ -88,7 +88,6 @@ try {
         $uzman_id = $_GET['uzman_id'];
         $rol = $_GET['rol'];
 
-        // Önce eski eşleşmeyi sil (Tek uzman kuralı için)
         $sil = $conn->prepare("DELETE FROM uzman_danisan_eslesmeleri WHERE danisan_id = ? AND uzman_rol = ?");
         $sil->execute([$danisan_id, $rol]);
 
@@ -200,6 +199,57 @@ try {
             }
         } else {
             header("Location: panel.php?durum=hata");
+        }
+        exit();
+    }
+
+    // --- 12. PREMIUM: FOTOĞRAF YÜKLEME (Senin foto_yukle.php mantığınla) ---
+    elseif ($is == 'foto_yukle') {
+        $user_id = $_SESSION['user_id'];
+        
+        if (isset($_FILES['form_foto']) && $_FILES['form_foto']['error'] == 0) {
+            $dosya = $_FILES['form_foto'];
+            $dizin = "uploads/form_fotolar/";
+            
+            if (!file_exists($dizin)) { mkdir($dizin, 0777, true); }
+
+            $uzanti = strtolower(pathinfo($dosya['name'], PATHINFO_EXTENSION));
+            $izinli = ['jpg','jpeg','png','webp'];
+
+            if(!in_array($uzanti, $izinli)){
+                die("Geçersiz dosya formatı.");
+            }
+
+            // foto_yukle.php dosendaki isimlendirme mantığı
+            $yeni_ad = time() . "_" . rand(1000,9999) . "." . $uzanti;
+            $hedef = $dizin . $yeni_ad;
+
+            if (move_uploaded_file($dosya['tmp_name'], $hedef)) {
+                $ekle = $conn->prepare("INSERT INTO gelisim_fotograflari (user_id, foto_yolu, aciklama, yuklenme_tarihi) VALUES (?, ?, ?, NOW())");
+                $ekle->execute([$user_id, $hedef, '']); 
+                header("Location: gelisim.php?yukleme=basarili");
+            } else {
+                die("Dosya taşıma hatası.");
+            }
+        }
+        exit();
+    }
+
+    // --- 13. PREMIUM: FOTOĞRAF SİLME ---
+    elseif ($is == 'foto_sil') {
+        $foto_id = $_GET['id'];
+        $user_id = $_SESSION['user_id'];
+
+        $sorgu = $conn->prepare("SELECT foto_yolu FROM gelisim_fotograflari WHERE id = ? AND user_id = ?");
+        $sorgu->execute([$foto_id, $user_id]);
+        $foto = $sorgu->fetch();
+
+        if ($foto) {
+            if (file_exists($foto['foto_yolu'])) {
+                unlink($foto['foto_yolu']);
+            }
+            $conn->prepare("DELETE FROM gelisim_fotograflari WHERE id = ?")->execute([$foto_id]);
+            header("Location: gelisim.php?silme=basarili");
         }
         exit();
     }
