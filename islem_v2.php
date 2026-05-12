@@ -78,7 +78,28 @@ try {
 
         $ekle = $conn->prepare("INSERT INTO aktivite_kayitlari (user_id, su_miktari, uyku_suresi, alinan_kalori, yakilan_kalori, spor_suresi, guncel_kilo, kayit_tarihi) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $ekle->execute([$user_id, $su, $uyku, $alinan, $yakilan, $spor, $kilo, $tarih]);
-        header("Location: panel.php?kayit=tamam");
+
+        include_once 'rozet_fonksiyonu.php';
+
+        $yeni_rozet = null;
+        $rozetler = [
+            rozetKontrolEt($conn, $user_id, 'su', $su),
+            rozetKontrolEt($conn, $user_id, 'uyku', $uyku),
+            rozetKontrolEt($conn, $user_id, 'spor', $spor)
+        ];
+
+        foreach ($rozetler as $rozet) {
+            if ($rozet) {
+                $yeni_rozet = $rozet;
+            }
+        }
+
+        $yonlendirme = "panel.php?kayit=tamam";
+        if ($yeni_rozet) {
+            $yonlendirme .= "&yeni_rozet=" . urlencode($yeni_rozet);
+        }
+
+        header("Location: " . $yonlendirme);
         exit();
     }
 

@@ -258,3 +258,21 @@ $mevcut_kayit = $kontrol->fetch();
 
 </body>
 </html>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<?php if (isset($_GET['yeni_rozet'])): ?>
+<script>
+    Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Tebrikler!',
+        text: <?php echo json_encode($_GET['yeni_rozet'] . ' rozetini kazandın!'); ?>,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+    });
+</script>
+<?php endif; ?>
+
+</body>
+</html>

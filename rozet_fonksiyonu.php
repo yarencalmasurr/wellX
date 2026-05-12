@@ -1,7 +1,9 @@
 <?php
 // rozet_fonksiyonu.php
 function rozetKontrolEt($conn, $user_id, $kategori, $mevcut_deger) {
-    // Bu kategoriye ait rozetleri bul
+   $yeni_rozet=null;
+// Bu kategoriye ait rozetleri bul
+
     $sorgu = $conn->prepare("SELECT * FROM rozetler WHERE kategori = ?");
     $sorgu->execute([$kategori]);
     $rozetler = $sorgu->fetchAll(PDO::FETCH_ASSOC);
@@ -19,7 +21,9 @@ function rozetKontrolEt($conn, $user_id, $kategori, $mevcut_deger) {
                 // Daha önce almamışsa rozeti ver
                 $ekle = $conn->prepare("INSERT INTO kullanici_rozetleri (user_id, rozet_id) VALUES (?, ?)");
                 $ekle->execute([$user_id, $rozet_id]);
+                $yeni_rozet=$rozet['rozet_adi'];
             }
         }
     }
+    return $yeni_rozet;
 }
