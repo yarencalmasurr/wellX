@@ -101,6 +101,7 @@ elseif ($is == 'onayla') {
 }
 
 // --- 4. GİRİŞ İŞLEMİ ---
+// --- 4. GİRİŞ İŞLEMİ ---
 elseif ($is == 'login') {
     $kadi  = $_POST['kullanici'] ?? '';
     $sifre = $_POST['sifre']     ?? '';
@@ -110,18 +111,23 @@ elseif ($is == 'login') {
     $user = $sorgu->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
-        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_id']  = $user['id'];
         $_SESSION['ad_soyad'] = $user['ad_soyad'];
-        $_SESSION['rol'] = strtolower(trim($user['rol']));
-        
+        $_SESSION['rol']      = $user['rol'];
+
+        // --- YÖNLENDİRME MANTIĞI BURAYA GELMELİ ---
         if ($user['rol'] == 'admin') {
             header("Location: basvuru_yonetim.php");
+        } elseif ($user['rol'] == 'diyetisyen') {
+            header("Location: diyetisyen_paneli.php");
+        } elseif ($user['rol'] == 'hoca') {
+            header("Location: hoca_paneli.php");
         } else {
-            header("Location: index.php");
+            header("Location: panel.php"); // Normal danışan paneli
         }
         exit();
     } else {
-        echo "<script>alert('Hatalı giriş!'); window.location.href='index.php';</script>";
+        header("Location: index.php?hata=1");
         exit();
     }
 }

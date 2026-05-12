@@ -73,38 +73,34 @@
     </div>
 
     <div class="plans-grid">
-        <!-- Öğrenci Planı -->
         <div class="plan-card">
             <div class="plan-icon">🎓</div>
             <div class="plan-name">Öğrenci Planı</div>
             <div class="plan-price">₺49.90 <span>/ay</span></div>
             
-            <!-- Formun premium_islem.php'ye yönlenmesi sağlandı -->
             <form action="premium_islem.php" method="POST" enctype="multipart/form-data">
-                <input type="hidden" name="plan" value="ogrenci">
+                <input type="hidden" name="plan_turu" value="ogrenci">
                 <div class="file-upload">
                     <label><i class="fas fa-file-upload"></i> Öğrenci Belgesi (PDF/JPG)</label>
-                    <input type="file" name="belge" required>
+                    <input type="file" name="ogrenci_belgesi" required>
                 </div>
-                <button type="submit" class="btn-select">Hemen Başla</button>
+                <button type="submit" name="premium_onay" class="btn-select">Hemen Başla</button>
             </form>
         </div>
 
-        <!-- Yetişkin Planı -->
         <div class="plan-card active">
             <div style="position: absolute; top: 15px; right: 20px; background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">En Popüler</div>
             <div class="plan-icon">🚀</div>
             <div class="plan-name">Yetişkin Planı</div>
             <div class="plan-price">₺99.90 <span>/ay</span></div>
             
-            <!-- Formun premium_islem.php'ye yönlenmesi sağlandı -->
             <form action="premium_islem.php" method="POST">
-                <input type="hidden" name="plan" value="yetiskin">
+                <input type="hidden" name="plan_turu" value="yetiskin">
                 <div style="margin: 20px 0; text-align: left; min-height: 70px;">
-                    <p style="font-size: 13px; color: #64748b;"><i class="fas fa-check text-success"></i> Anında Aktivasyon</p>
-                    <p style="font-size: 13px; color: #64748b;"><i class="fas fa-check text-success"></i> Tüm Özelliklere Erişim</p>
+                    <p style="font-size: 13px; color: #64748b;"><i class="fas fa-check" style="color: #10b981;"></i> Anında Aktivasyon</p>
+                    <p style="font-size: 13px; color: #64748b;"><i class="fas fa-check" style="color: #10b981;"></i> Tüm Özelliklere Erişim</p>
                 </div>
-                <button type="submit" class="btn-select">Hemen Başla</button>
+                <button type="submit" name="premium_onay" class="btn-select">Hemen Başla</button>
             </form>
         </div>
     </div>

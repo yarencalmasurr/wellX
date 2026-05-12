@@ -249,7 +249,7 @@ $mevcut_kayit = $kontrol->fetch();
       </div>
       <div class="modal-body p-4 text-center">
         <p>Uzmanlarınızla birebir iletişim kurun ve size özel gelişim grafiklerine erişin.</p>
-        <button class="btn btn-warning w-100" onclick="alert('Yakında!')">Planları İncele</button>
+        <a href="premium_planlar.php" class="btn btn-warning w-100">Planları İncele</a>
       </div>
     </div>
   </div>
