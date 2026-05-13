@@ -44,6 +44,17 @@ try {
     $istatistik_sorgu->execute([$diyetisyen_id]);
     $tarifler = $istatistik_sorgu->fetchAll(PDO::FETCH_ASSOC);
 
+    // 3. Gelen Soruları Çek (Sadece Bekleyenler)
+    $soru_sorgu = $conn->prepare("
+        SELECT us.*, k.ad_soyad as danisan_adi 
+        FROM uzman_sorulari us 
+        JOIN kullanicilar k ON us.danisan_id = k.id 
+        WHERE us.uzman_id = ? AND us.durum = 'beklemede'
+        ORDER BY us.soru_tarihi DESC
+    ");
+    $soru_sorgu->execute([$diyetisyen_id]);
+    $gelen_sorular = $soru_sorgu->fetchAll(PDO::FETCH_ASSOC);
+
 } catch (PDOException $e) {
     die("Veritabanı hatası oluştu: " . $e->getMessage());
 }
@@ -212,6 +223,10 @@ try {
         <div class="alert-msg">
             <i class="fas fa-check-circle"></i> Beslenme planı danışana iletildi.
         </div>
+    <?php elseif(isset($_GET['durum']) && $_GET['durum'] == 'cevaplandi'): ?>
+        <div class="alert-msg">
+            <i class="fas fa-check-circle"></i> Soruya verdiğiniz cevap danışana iletildi.
+        </div>
     <?php endif; ?>
 
     <h2 class="page-title">Bugün danışanların için neler hazırladın?</h2>
@@ -297,8 +312,38 @@ try {
                 <?php endif; ?>
             </div>
         </div>
-
     </div>
+
+    <div class="card" style="border-top: 5px solid #f59e0b; margin-top: 10px;">
+        <h3><i class="fas fa-envelope-open-text" style="color: #f59e0b;"></i> Danışanlardan Gelen Sorular (Cevap Bekleyenler)</h3>
+        
+        <?php if($gelen_sorular): ?>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px;">
+                <?php foreach($gelen_sorular as $soru): ?>
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <strong style="color: #1e293b;"><i class="fas fa-user-circle text-muted"></i> <?php echo htmlspecialchars($soru['danisan_adi']); ?></strong>
+                            <small style="color: #64748b;"><i class="far fa-clock"></i> <?php echo date('d.m.Y H:i', strtotime($soru['soru_tarihi'])); ?></small>
+                        </div>
+                        <div style="color: #334155; font-size: 15px; margin-bottom: 15px; padding: 15px; background: white; border-radius: 12px; border-left: 4px solid #f59e0b;">
+                            "<?php echo nl2br(htmlspecialchars($soru['soru_metni'])); ?>"
+                        </div>
+                        <form action="islem_v2.php?is=cevapla" method="POST">
+                            <input type="hidden" name="soru_id" value="<?php echo $soru['id']; ?>">
+                            <textarea name="cevap_metni" placeholder="Cevabınızı buraya yazın..." required style="min-height: 80px; margin-bottom: 15px;"></textarea>
+                            <button type="submit" class="btn" style="padding: 12px; background: #f59e0b; color: white;"><i class="fas fa-paper-plane"></i> Cevabı Gönder</button>
+                        </form>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <div style="text-align: center; padding: 30px; background: #f8fafc; border-radius: 16px; border: 1px dashed #cbd5e1;">
+                <i class="fas fa-check-circle" style="font-size: 30px; color: #10b981; margin-bottom: 10px;"></i>
+                <p style="color: var(--text-muted); margin: 0;">Harika! Şu an cevap bekleyen hiçbir soru yok.</p>
+            </div>
+        <?php endif; ?>
+    </div>
+
 </div>
 
 </body>

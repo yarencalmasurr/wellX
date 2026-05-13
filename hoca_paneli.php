@@ -2,7 +2,7 @@
 /**
  * Proje: saglik_portali
  * Dosya: hoca_paneli.php
- * Açıklama: Spor hocasının sadece kendine bağlı danışanları yönettiği modern panel
+ * Açıklama: Spor hocasının sadece kendine bağlı danışanları yönettiği modern panel. Gelen sorular eklendi.
  */
 
 session_start();
@@ -18,6 +18,7 @@ $hoca_id = $_SESSION['user_id'];
 $bugun = date('Y-m-d');
 
 try {
+    // 1. Size Bağlı Danışanları Çek
     $sorgu = $conn->prepare("
         SELECT k.id, k.ad_soyad, k.email,
         (SELECT SUM(spor_suresi) FROM aktivite_kayitlari WHERE user_id = k.id AND kayit_tarihi = ?) as bugunku_spor
@@ -27,6 +28,17 @@ try {
     ");
     $sorgu->execute([$bugun, $hoca_id]);
     $danisanlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
+
+    // 2. Gelen Soruları Çek (Sadece Bekleyenler)
+    $soru_sorgu = $conn->prepare("
+        SELECT us.*, k.ad_soyad as danisan_adi 
+        FROM uzman_sorulari us 
+        JOIN kullanicilar k ON us.danisan_id = k.id 
+        WHERE us.uzman_id = ? AND us.durum = 'beklemede'
+        ORDER BY us.soru_tarihi DESC
+    ");
+    $soru_sorgu->execute([$hoca_id]);
+    $gelen_sorular = $soru_sorgu->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
     die("Veritabanı hatası oluştu: " . $e->getMessage());
@@ -42,10 +54,10 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { 
-            --primary: #1e293b; /* Koyu lacivert/gri menü */
-            --accent: #3b82f6; /* Modern Mavi */
+            --primary: #1e293b; 
+            --accent: #3b82f6; 
             --danger: #ef4444; 
-            --bg: #f8fafc; /* Açık gri arkaplan */
+            --bg: #f8fafc; 
             --card-bg: #ffffff;
             --text-main: #334155;
             --text-muted: #94a3b8;
@@ -87,20 +99,7 @@ try {
         .user-info strong { font-size: 16px; color: white; display: block; margin-top: 4px; }
         
         .sidebar nav { flex-grow: 1; }
-        .sidebar a { 
-            display: flex; 
-            align-items: center;
-            gap: 12px;
-            color: #cbd5e1; 
-            text-decoration: none; 
-            padding: 14px 16px; 
-            border-radius: 12px; 
-            transition: 0.3s; 
-            font-weight: 500;
-            font-size: 15px;
-        }
-        .sidebar a:hover { background: rgba(255,255,255,0.1); color: white; }
-        .sidebar .logout-btn { margin-top: auto; color: #fca5a5; }
+        .sidebar .logout-btn { margin-top: auto; color: #fca5a5; display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 12px; border-radius: 12px; transition: 0.3s; font-weight: 500;}
         .sidebar .logout-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
 
         /* Main Content */
@@ -117,8 +116,7 @@ try {
             border: 1px solid rgba(226,232,240,0.8);
             transition: transform 0.2s;
         }
-        .card:hover { transform: translateY(-2px); }
-        .card h3 { margin-top: 0; display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; color: #1e293b; }
+        .card h3 { margin-top: 0; display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 20px; }
         
         /* Inputs & Buttons */
         input[type="text"], textarea { 
@@ -195,6 +193,10 @@ try {
         <div class="alert-msg">
             <i class="fas fa-check-circle"></i> İşlem başarıyla tamamlandı.
         </div>
+    <?php elseif(isset($_GET['durum']) && $_GET['durum'] == 'cevaplandi'): ?>
+        <div class="alert-msg">
+            <i class="fas fa-check-circle"></i> Soruya verdiğiniz cevap sporcuya iletildi.
+        </div>
     <?php endif; ?>
 
     <div class="card tarif-box">
@@ -243,6 +245,36 @@ try {
             <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 50px;">
                 <i class="fas fa-users" style="font-size: 48px; color: #cbd5e1; margin-bottom: 15px;"></i>
                 <p style="color: var(--text-muted); font-size: 16px; margin: 0;">Henüz size atanmış bir sporcu bulunmuyor.</p>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <div class="card" style="border-top: 5px solid #f59e0b; margin-top: 30px;">
+        <h3><i class="fas fa-question-circle" style="color: #f59e0b;"></i> Sporculardan Gelen Sorular (Cevap Bekleyenler)</h3>
+        
+        <?php if($gelen_sorular): ?>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px;">
+                <?php foreach($gelen_sorular as $soru): ?>
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <strong style="color: #1e293b;"><i class="fas fa-user-circle text-muted"></i> <?php echo htmlspecialchars($soru['danisan_adi']); ?></strong>
+                            <small style="color: #64748b;"><i class="far fa-clock"></i> <?php echo date('d.m.Y H:i', strtotime($soru['soru_tarihi'])); ?></small>
+                        </div>
+                        <div style="color: #334155; font-size: 15px; margin-bottom: 15px; padding: 15px; background: white; border-radius: 12px; border-left: 4px solid #f59e0b;">
+                            "<?php echo nl2br(htmlspecialchars($soru['soru_metni'])); ?>"
+                        </div>
+                        <form action="islem_v2.php?is=cevapla" method="POST">
+                            <input type="hidden" name="soru_id" value="<?php echo $soru['id']; ?>">
+                            <textarea name="cevap_metni" placeholder="Sporcunuza cevabınızı yazın..." required style="min-height: 80px; margin-bottom: 15px;"></textarea>
+                            <button type="submit" class="btn" style="padding: 12px; background: #f59e0b; color: white;"><i class="fas fa-paper-plane"></i> Cevabı Gönder</button>
+                        </form>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <div style="text-align: center; padding: 30px; background: #f8fafc; border-radius: 16px; border: 1px dashed #cbd5e1;">
+                <i class="fas fa-check-circle" style="font-size: 30px; color: #3b82f6; margin-bottom: 10px;"></i>
+                <p style="color: var(--text-muted); margin: 0;">Harika! Şu an cevap bekleyen hiçbir soru yok.</p>
             </div>
         <?php endif; ?>
     </div>
