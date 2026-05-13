@@ -1,14 +1,7 @@
 <?php
-/**
- * Proje: saglik_portali
- * Dosya: hoca_paneli.php
- * Açıklama: Spor hocasının sadece kendine bağlı danışanları yönettiği modern panel. Gelen sorular eklendi.
- */
-
 session_start();
 include 'baglan.php';
 
-// Güvenlik Kontrolü: Giriş yapmamış veya rolü hoca olmayanları engelle
 if (!isset($_SESSION['user_id']) || ($_SESSION['rol'] != 'hoca')) {
     header("Location: index.php"); 
     exit();
@@ -16,9 +9,9 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['rol'] != 'hoca')) {
 
 $hoca_id = $_SESSION['user_id'];
 $bugun = date('Y-m-d');
+$son_duyuru = null;
 
 try {
-    // 1. Size Bağlı Danışanları Çek
     $sorgu = $conn->prepare("
         SELECT k.id, k.ad_soyad, k.email,
         (SELECT SUM(spor_suresi) FROM aktivite_kayitlari WHERE user_id = k.id AND kayit_tarihi = ?) as bugunku_spor
@@ -29,7 +22,6 @@ try {
     $sorgu->execute([$bugun, $hoca_id]);
     $danisanlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2. Gelen Soruları Çek (Sadece Bekleyenler)
     $soru_sorgu = $conn->prepare("
         SELECT us.*, k.ad_soyad as danisan_adi 
         FROM uzman_sorulari us 
@@ -39,6 +31,16 @@ try {
     ");
     $soru_sorgu->execute([$hoca_id]);
     $gelen_sorular = $soru_sorgu->fetchAll(PDO::FETCH_ASSOC);
+
+    $son_duyuru_sorgu = $conn->prepare("
+        SELECT * 
+        FROM gunun_antrenmani 
+        WHERE hoca_id = ? 
+        ORDER BY id DESC 
+        LIMIT 1
+    ");
+    $son_duyuru_sorgu->execute([$hoca_id]);
+    $son_duyuru = $son_duyuru_sorgu->fetch(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
     die("Veritabanı hatası oluştu: " . $e->getMessage());
@@ -63,116 +65,31 @@ try {
             --text-muted: #94a3b8;
         }
         body { background: var(--bg); font-family: 'Poppins', sans-serif; margin: 0; display: flex; color: var(--text-main); }
-        
-        /* Modern Sidebar */
-        .sidebar { 
-            width: 260px; 
-            background: var(--primary); 
-            height: 100vh; 
-            color: white; 
-            padding: 40px 30px; 
-            position: fixed; 
-            box-shadow: 4px 0 24px rgba(0,0,0,0.06); 
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-        }
-        .sidebar .logo {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 40px;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-        }
+        .sidebar { width: 260px; background: var(--primary); height: 100vh; color: white; padding: 40px 30px; position: fixed; box-shadow: 4px 0 24px rgba(0,0,0,0.06); display: flex; flex-direction: column; box-sizing: border-box; }
+        .sidebar .logo { font-size: 24px; font-weight: 700; margin-bottom: 40px; color: white; display: flex; align-items: center; gap: 12px; text-decoration: none; }
         .sidebar .logo i { color: #f59e0b; }
-        
-        .user-info {
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-        }
+        .user-info { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 30px; }
         .user-info p { margin: 0; font-size: 14px; color: #cbd5e1; }
         .user-info strong { font-size: 16px; color: white; display: block; margin-top: 4px; }
-        
-        .sidebar nav { flex-grow: 1; }
         .sidebar .logout-btn { margin-top: auto; color: #fca5a5; display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 12px; border-radius: 12px; transition: 0.3s; font-weight: 500;}
         .sidebar .logout-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-
-        /* Main Content */
         .main { margin-left: 260px; padding: 50px; width: calc(100% - 260px); box-sizing: border-box; }
         .page-title { font-size: 28px; font-weight: 700; margin-top: 0; margin-bottom: 30px; color: #0f172a; }
-
-        /* Modern Cards */
-        .card { 
-            background: var(--card-bg); 
-            padding: 30px; 
-            border-radius: 24px; 
-            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.05); 
-            margin-bottom: 30px; 
-            border: 1px solid rgba(226,232,240,0.8);
-            transition: transform 0.2s;
-        }
+        .card { background: var(--card-bg); padding: 30px; border-radius: 24px; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.05); margin-bottom: 30px; border: 1px solid rgba(226,232,240,0.8); transition: transform 0.2s; }
         .card h3 { margin-top: 0; display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 20px; }
-        
-        /* Inputs & Buttons */
-        input[type="text"], textarea { 
-            width: 100%; 
-            padding: 16px; 
-            border-radius: 14px; 
-            border: 1px solid #e2e8f0; 
-            background: #f8fafc;
-            margin-bottom: 15px; 
-            box-sizing: border-box; 
-            font-family: inherit; 
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-        input[type="text"]:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-            background: white;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-        }
+        input[type="text"], textarea { width: 100%; padding: 16px; border-radius: 14px; border: 1px solid #e2e8f0; background: #f8fafc; margin-bottom: 15px; box-sizing: border-box; font-family: inherit; font-size: 14px; transition: all 0.3s; }
+        input[type="text"]:focus, textarea:focus { outline: none; border-color: var(--accent); background: white; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
         textarea { resize: vertical; min-height: 100px; }
-
-        .btn { 
-            background: var(--accent); 
-            color: white; 
-            border: none; 
-            padding: 14px 24px; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            font-weight: 600; 
-            font-size: 15px;
-            width: 100%; 
-            transition: 0.3s; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
+        .btn { background: var(--accent); color: white; border: none; padding: 14px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 15px; width: 100%; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
-        
         .alert-msg { background: #dcfce7; color: #166534; padding: 15px 20px; border-radius: 12px; font-weight: 500; font-size: 14px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
         .badge-warning { background: #fef3c7; color: #d97706; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block;}
-
-        /* Announcement Box */
-        .tarif-box { 
-            background: linear-gradient(to right, #ffffff, #f0f9ff);
-            border: 2px dashed #bae6fd; 
-        }
-        
-        /* Students Grid */
+        .tarif-box { background: linear-gradient(to right, #ffffff, #f0f9ff); border: 2px dashed #bae6fd; }
         .students-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
-        
         .student-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
         .student-name { display: flex; align-items: center; gap: 12px; }
         .student-avatar { width: 45px; height: 45px; background: #eff6ff; color: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; }
-        
+        .son-kayit { background: #f8fafc; padding: 15px; border-radius: 10px; margin-top: 10px; border-left: 4px solid var(--accent); font-size: 14px; }
     </style>
 </head>
 <body>
@@ -244,7 +161,7 @@ try {
                     
                     <form action="islem_v2.php?is=egzersiz_yaz" method="POST">
                         <input type="hidden" name="danisan_id" value="<?php echo $d['id']; ?>">
-                        <textarea name="antrenman_notu" placeholder="<?php echo $d['ad_soyad']; ?> için özel antrenman programı..." required style="min-height: 80px;"></textarea>
+                        <textarea name="antrenman_notu" placeholder="<?php echo htmlspecialchars($d['ad_soyad']); ?> için özel antrenman programı..." required style="min-height: 80px;"></textarea>
                         <button type="submit" class="btn"><i class="fas fa-check"></i> Notu Gönder</button>
                     </form>
                 </div>
