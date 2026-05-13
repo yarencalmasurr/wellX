@@ -1,6 +1,4 @@
 <?php
-
-
 session_start();
 include 'baglan.php';
 
@@ -12,6 +10,13 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
+// --- BİLDİRİMİ OKUNDU YAP (SAYFAYA GİRİNCE BİLDİRİM SİLİNİR) ---
+try {
+    $update = $conn->prepare("UPDATE beslenme_planlari SET okundu = 1 WHERE user_id = ? AND DATE(kayit_tarihi) = CURDATE()");
+    $update->execute([$user_id]);
+} catch (PDOException $e) {}
+
+// BUGÜNÜN PLANLARINI ÇEK
 $sorgu = $conn->prepare("SELECT bp.*, k.ad_soyad as diyetisyen_adi 
                          FROM beslenme_planlari bp 
                          LEFT JOIN kullanicilar k ON bp.diyetisyen_id = k.id 
@@ -63,9 +68,13 @@ $planlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
                     <strong>🍎 Diyetisyen: <?php echo htmlspecialchars($plan['diyetisyen_adi']); ?></strong>
                     <span class="plan-date">📅 <?php echo date('d.m.Y H:i', strtotime($plan['kayit_tarihi'])); ?></span>
                 </div>
-                <div class="plan-text">
-                    <?php echo nl2br(htmlspecialchars($plan['plan_metni'])); ?>
-                </div>
+        
+<div class="plan-text">
+    <?php 
+        // plan_notu yerine plan_metni kullanıldı
+        echo nl2br(htmlspecialchars($plan['plan_metni'] ?? '')); 
+    ?>
+</div>
             </div>
         <?php endforeach; ?>
     <?php else: ?>

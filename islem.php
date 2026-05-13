@@ -100,7 +100,7 @@ elseif ($is == 'onayla') {
     }
 }
 
-// --- 4. GİRİŞ İŞLEMİ ---
+
 // --- 4. GİRİŞ İŞLEMİ ---
 elseif ($is == 'login') {
     $kadi  = $_POST['kullanici'] ?? '';

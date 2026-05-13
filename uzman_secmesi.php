@@ -15,8 +15,15 @@ if (!isset($_SESSION['user_id'])) {
 // Gelen rolü temizle ve küçük harfe çevir (hoca veya diyetisyen)
 $rol_tipi = isset($_GET['rol']) ? strtolower(trim($_GET['rol'])) : ''; 
 
-// Veritabanındaki uzmanları çekerken hem küçük hem büyük harf ihtimalini değerlendiriyoruz
-$sorgu = $conn->prepare("SELECT id, ad_soyad, email FROM kullanicilar WHERE LOWER(rol) = ?");
+// GÜVENLİK: Sadece 'diyetisyen' ve 'hoca' rollerinin aranmasına izin veriyoruz.
+// URL'den manipüle edilip 'danışan' listelenmesi engellendi.
+if (!in_array($rol_tipi, ['diyetisyen', 'hoca'])) {
+    header("Location: panel.php"); 
+    exit();
+}
+
+// Veritabanındaki uzmanları çekerken kullanıcı adını (kullanici_adi) da ekledik
+$sorgu = $conn->prepare("SELECT id, ad_soyad, kullanici_adi, email FROM kullanicilar WHERE LOWER(rol) = ?");
 $sorgu->execute([$rol_tipi]);
 $uzmanlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -60,6 +67,8 @@ $uzmanlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
                     <i class="fas <?php echo ($rol_tipi == 'diyetisyen' ? 'fa-user-md' : 'fa-running'); ?>"></i>
                 </div>
                 <h3 style="margin: 0;"><?php echo htmlspecialchars($u['ad_soyad']); ?></h3>
+                <small style="color: #94a3b8; font-weight: 500;">(@<?php echo htmlspecialchars($u['kullanici_adi']); ?>)</small>
+                
                 <p style="color: #64748b; font-size: 14px; margin: 10px 0;"><?php echo htmlspecialchars($u['email']); ?></p>
                 
                 <a href="islem_v2.php?is=uzman_atama&uzman_id=<?php echo $u['id']; ?>&rol=<?php echo $rol_tipi; ?>" 

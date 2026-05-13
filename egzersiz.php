@@ -2,7 +2,7 @@
 /**
  * Proje: saglik_portali
  * Dosya: egzersiz.php
- * Açıklama: Danışanın sadece bugüne ait egzersiz/antrenman planlarını gördüğü sayfa
+ * Açıklama: Danışanın sadece bugüne ait egzersiz/antrenman planlarını gördüğü ve bildirimlerin temizlendiği sayfa.
  */
 
 session_start();
@@ -16,10 +16,18 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
+// --- BİLDİRİMİ OKUNDU YAP (YENİ EKLENEN KISIM) ---
+// Kullanıcı bu sayfaya girdiği an, bugünkü tüm okunmamış egzersiz planlarını okundu (1) yapar.
+// Böylece panel.php'deki mavi bildirim kutusu kaybolur.
+try {
+    $update = $conn->prepare("UPDATE egzersiz_planlari SET okundu = 1 WHERE user_id = ? AND DATE(kayit_tarihi) = CURDATE()");
+    $update->execute([$user_id]);
+} catch (PDOException $e) {
+    // Hata durumunda sessizce devam eder
+}
+
 /**
- * SORGUSU GÜNCELLEMESİ:
- * DATE(ep.kayit_tarihi) = CURDATE() ekleyerek sadece bugünün antrenmanlarını çekiyoruz.
- * Bu sayede dün ve daha eski tarihli antrenmanlar bu listede görünmez.
+ * BUGÜNÜN PLANLARINI ÇEK
  */
 $sorgu = $conn->prepare("SELECT ep.*, k.ad_soyad as hoca_adi 
                          FROM egzersiz_planlari ep 
@@ -71,7 +79,10 @@ $planlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
                     <br><small style="color: #95a5a6;">📅 <?php echo date('d.m.Y H:i', strtotime($p['kayit_tarihi'])); ?></small>
                 </div>
                 <p style="white-space: pre-line; color: #2d3436; line-height: 1.6;">
-                    <?php echo nl2br(htmlspecialchars($p['antrenman_notu'])); ?>
+                    <?php 
+                        // Veritabanındaki gerçek sütun adına göre (antrenman_notu) gösterilir.
+                        echo nl2br(htmlspecialchars($p['antrenman_notu'])); 
+                    ?>
                 </p>
             </div>
         <?php endforeach; ?>
