@@ -12,16 +12,21 @@ $bugun = date('Y-m-d');
 $son_duyuru = null;
 
 try {
+    // 1. Danışanları Çek ve Bugünkü Spor Günlüğünü Getir (YENİ SİSTEM)
     $sorgu = $conn->prepare("
         SELECT k.id, k.ad_soyad, k.email,
-        (SELECT SUM(spor_suresi) FROM aktivite_kayitlari WHERE user_id = k.id AND kayit_tarihi = ?) as bugunku_spor
+        (SELECT SUM(spor_suresi) FROM aktivite_kayitlari WHERE user_id = k.id AND kayit_tarihi = ?) as bugunku_spor,
+        (SELECT GROUP_CONCAT(CONCAT(sure_dk, ' dk ', egzersiz_adi, ' (', yakilan_kalori, ' kcal yaktı)') SEPARATOR '<br>') 
+         FROM egzersiz_gunlugu 
+         WHERE user_id = k.id AND tarih = ?) as yapilan_sporlar
         FROM kullanicilar k 
         JOIN uzman_danisan_eslesmeleri ude ON k.id = ude.danisan_id
         WHERE ude.uzman_id = ? AND ude.uzman_rol = 'hoca'
     ");
-    $sorgu->execute([$bugun, $hoca_id]);
+    $sorgu->execute([$bugun, $bugun, $hoca_id]);
     $danisanlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
 
+    // 2. Bekleyen Soruları Çek
     $soru_sorgu = $conn->prepare("
         SELECT us.*, k.ad_soyad as danisan_adi 
         FROM uzman_sorulari us 
@@ -32,9 +37,9 @@ try {
     $soru_sorgu->execute([$hoca_id]);
     $gelen_sorular = $soru_sorgu->fetchAll(PDO::FETCH_ASSOC);
 
+    // 3. Son Duyuruyu Çek
     $son_duyuru_sorgu = $conn->prepare("
-        SELECT * 
-        FROM gunun_antrenmani 
+        SELECT * FROM gunun_antrenmani 
         WHERE hoca_id = ? 
         ORDER BY id DESC 
         LIMIT 1
@@ -54,6 +59,8 @@ try {
     <title>Hoca Yönetim Paneli</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         :root { 
             --primary: #1e293b; 
@@ -65,7 +72,8 @@ try {
             --text-muted: #94a3b8;
         }
         body { background: var(--bg); font-family: 'Poppins', sans-serif; margin: 0; display: flex; color: var(--text-main); }
-        .sidebar { width: 260px; background: var(--primary); height: 100vh; color: white; padding: 40px 30px; position: fixed; box-shadow: 4px 0 24px rgba(0,0,0,0.06); display: flex; flex-direction: column; box-sizing: border-box; }
+        
+        .sidebar { width: 260px; background: var(--primary); height: 100vh; color: white; padding: 40px 30px; position: fixed; box-shadow: 4px 0 24px rgba(0,0,0,0.06); display: flex; flex-direction: column; box-sizing: border-box; z-index: 1000; }
         .sidebar .logo { font-size: 24px; font-weight: 700; margin-bottom: 40px; color: white; display: flex; align-items: center; gap: 12px; text-decoration: none; }
         .sidebar .logo i { color: #f59e0b; }
         .user-info { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 30px; }
@@ -73,23 +81,32 @@ try {
         .user-info strong { font-size: 16px; color: white; display: block; margin-top: 4px; }
         .sidebar .logout-btn { margin-top: auto; color: #fca5a5; display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 12px; border-radius: 12px; transition: 0.3s; font-weight: 500;}
         .sidebar .logout-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        
         .main { margin-left: 260px; padding: 50px; width: calc(100% - 260px); box-sizing: border-box; }
         .page-title { font-size: 28px; font-weight: 700; margin-top: 0; margin-bottom: 30px; color: #0f172a; }
+        
         .card { background: var(--card-bg); padding: 30px; border-radius: 24px; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.05); margin-bottom: 30px; border: 1px solid rgba(226,232,240,0.8); transition: transform 0.2s; }
         .card h3 { margin-top: 0; display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 20px; }
+        
         input[type="text"], textarea { width: 100%; padding: 16px; border-radius: 14px; border: 1px solid #e2e8f0; background: #f8fafc; margin-bottom: 15px; box-sizing: border-box; font-family: inherit; font-size: 14px; transition: all 0.3s; }
         input[type="text"]:focus, textarea:focus { outline: none; border-color: var(--accent); background: white; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
         textarea { resize: vertical; min-height: 100px; }
-        .btn { background: var(--accent); color: white; border: none; padding: 14px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 15px; width: 100%; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+        
+        .btn-custom { background: var(--accent); color: white; border: none; padding: 14px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 15px; width: 100%; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-custom:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.2); color:white;}
+        
         .alert-msg { background: #dcfce7; color: #166534; padding: 15px 20px; border-radius: 12px; font-weight: 500; font-size: 14px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
         .badge-warning { background: #fef3c7; color: #d97706; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block;}
         .tarif-box { background: linear-gradient(to right, #ffffff, #f0f9ff); border: 2px dashed #bae6fd; }
+        
         .students-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
         .student-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
         .student-name { display: flex; align-items: center; gap: 12px; }
         .student-avatar { width: 45px; height: 45px; background: #eff6ff; color: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; }
         .son-kayit { background: #f8fafc; padding: 15px; border-radius: 10px; margin-top: 10px; border-left: 4px solid var(--accent); font-size: 14px; }
+        
+        /* Spor Günlüğü Kutu */
+        .spor-liste-kutu { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-top: 10px; font-size: 14px; color: #334155; line-height: 1.6;}
     </style>
 </head>
 <body>
@@ -107,13 +124,9 @@ try {
 
 <div class="main">
     <?php if(isset($_GET['durum']) && $_GET['durum'] == 'ok'): ?>
-        <div class="alert-msg">
-            <i class="fas fa-check-circle"></i> İşlem başarıyla tamamlandı.
-        </div>
+        <div class="alert-msg"><i class="fas fa-check-circle"></i> İşlem başarıyla tamamlandı.</div>
     <?php elseif(isset($_GET['durum']) && $_GET['durum'] == 'cevaplandi'): ?>
-        <div class="alert-msg">
-            <i class="fas fa-check-circle"></i> Soruya verdiğiniz cevap sporcuya iletildi.
-        </div>
+        <div class="alert-msg"><i class="fas fa-check-circle"></i> Soruya verdiğiniz cevap sporcuya iletildi.</div>
     <?php endif; ?>
 
     <div class="card tarif-box">
@@ -121,7 +134,7 @@ try {
         <form action="islem_v2.php?is=antrenman_duyuru_kaydet" method="POST" style="margin-top: 20px;">
             <input type="text" name="duyuru_baslik" placeholder="Antrenman Başlığı (Örn: Kardiyo Günü)" required>
             <textarea name="duyuru_icerik" placeholder="Hareketler ve set sayıları..." required></textarea>
-            <button type="submit" class="btn"><i class="fas fa-paper-plane"></i> Duyuruyu Yayınla</button>
+            <button type="submit" class="btn-custom"><i class="fas fa-paper-plane"></i> Duyuruyu Yayınla</button>
         </form>
 
         <?php if($son_duyuru): ?>
@@ -143,7 +156,12 @@ try {
                         <div class="student-name">
                             <div class="student-avatar"><i class="fas fa-user"></i></div>
                             <div>
-                                <h4 style="margin:0; font-size: 16px; color:#1e293b;"><?php echo htmlspecialchars($d['ad_soyad']); ?></h4>
+                                <h4 style="margin:0; font-size: 16px; color:#1e293b; display:flex; align-items:center; gap:8px;">
+                                    <?php echo htmlspecialchars($d['ad_soyad']); ?>
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" style="font-size:10px; padding:2px 8px;" data-bs-toggle="modal" data-bs-target="#sporModal<?php echo $d['id']; ?>">
+                                        <i class="fas fa-running me-1"></i> Ne Yaptı?
+                                    </button>
+                                </h4>
                                 <span style="font-size: 13px; color: var(--text-muted);"><?php echo htmlspecialchars($d['email']); ?></span>
                             </div>
                         </div>
@@ -159,12 +177,40 @@ try {
                         </div>
                     </div>
                     
-                    <form action="islem_v2.php?is=egzersiz_yaz" method="POST">
+                    <form action="islem_v2.php?is=egzersiz_yaz" method="POST" style="display:flex; gap:10px;">
                         <input type="hidden" name="danisan_id" value="<?php echo $d['id']; ?>">
-                        <textarea name="antrenman_notu" placeholder="<?php echo htmlspecialchars($d['ad_soyad']); ?> için özel antrenman programı..." required style="min-height: 80px;"></textarea>
-                        <button type="submit" class="btn"><i class="fas fa-check"></i> Notu Gönder</button>
+                        <input type="text" name="plan_metni" placeholder="Özel antrenman programı..." class="form-control" required style="margin-bottom:0; flex-grow:1; border-radius:10px;">
+                        <button type="submit" class="btn-custom" style="width: auto; padding: 10px 20px; border-radius:10px;"><i class="fas fa-check"></i></button>
                     </form>
                 </div>
+
+                <div class="modal fade" id="sporModal<?php echo $d['id']; ?>" tabindex="-1">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content" style="border-radius: 20px; border:none;">
+                      <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold text-primary"><i class="fas fa-dumbbell me-2"></i> <?php echo explode(' ', $d['ad_soyad'])[0]; ?>'nin Spor Günlüğü</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body p-4">
+                        <p class="text-muted small mb-2">Sporcunun bugün sisteme girdiği egzersizler:</p>
+                        <?php if($d['yapilan_sporlar']): ?>
+                            <div class="spor-liste-kutu">
+                                <?php echo $d['yapilan_sporlar']; ?>
+                            </div>
+                            <div class="mt-3 text-end fw-bold text-primary">
+                                Toplam Süre: <?php echo $d['bugunku_spor']; ?> dakika
+                            </div>
+                        <?php else: ?>
+                            <div class="alert alert-warning text-center rounded-4 border-0 mb-0">
+                                <i class="fas fa-bed mb-2" style="font-size:24px;"></i><br>
+                                Sporcu bugün henüz bir egzersiz girmemiş. Dinleniyor olabilir!
+                            </div>
+                        <?php endif; ?>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
             <?php endforeach; ?>
         <?php else: ?>
             <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 50px;">
@@ -191,7 +237,7 @@ try {
                         <form action="islem_v2.php?is=cevapla" method="POST">
                             <input type="hidden" name="soru_id" value="<?php echo $soru['id']; ?>">
                             <textarea name="cevap_metni" placeholder="Sporcunuza cevabınızı yazın..." required style="min-height: 80px; margin-bottom: 15px;"></textarea>
-                            <button type="submit" class="btn" style="padding: 12px; background: #f59e0b; color: white;"><i class="fas fa-paper-plane"></i> Cevabı Gönder</button>
+                            <button type="submit" class="btn-custom" style="padding: 12px; background: #f59e0b; color: white;"><i class="fas fa-paper-plane"></i> Cevabı Gönder</button>
                         </form>
                     </div>
                 <?php endforeach; ?>

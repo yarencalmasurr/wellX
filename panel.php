@@ -381,9 +381,17 @@ $mevcut_kayit = $kontrol->fetch();
             <div class="form-grid">
                 <input type="number" step="0.1" name="su_miktari" placeholder="Su (Litre)" required class="form-control">
                 <input type="number" step="0.1" name="uyku_suresi" placeholder="Uyku (Saat)" required class="form-control">
-                <input type="number" name="alinan_kalori" placeholder="Alınan Kalori" required class="form-control">
-                <input type="number" name="yakilan_kalori" placeholder="Yakılan Kalori" required class="form-control">
-                <input type="number" name="spor_suresi" placeholder="Spor (Dakika)" required class="form-control">
+                <button type="button" class="btn btn-outline-success fw-bold text-start" data-bs-toggle="modal" data-bs-target="#yemekModal" style="border-radius:14px; padding:14px; background: white;">
+                <i class="fas fa-apple-alt me-2"></i> Öğün Ekle
+        </button>
+
+    <button type="button" class="btn btn-outline-primary fw-bold text-start" data-bs-toggle="modal" data-bs-target="#egzersizModal" style="border-radius:14px; padding:14px; background: white;">
+                <i class="fas fa-running me-2"></i> Egzersiz Ekle
+</button>
+
+                <input type="hidden" name="alinan_kalori" value="0">
+                <input type="hidden" name="yakilan_kalori" value="0">
+                <input type="hidden" name="spor_suresi" value="0">
                 <input type="number" step="0.1" name="guncel_kilo" placeholder="Kilo (kg)" value="<?php echo $son_kilo; ?>" required class="form-control">
             </div>
             <button type="submit" class="btn-submit"><i class="fas fa-save me-2"></i> Verileri Sisteme İşle</button>
@@ -435,6 +443,100 @@ function formuKapat() {
     });
 </script>
 <?php endif; ?>
+<div class="modal fade" id="yemekModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 20px;">
+      <form action="islem_v2.php?is=yemek_ekle" method="POST">
+        <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold text-success"><i class="fas fa-apple-alt"></i> Ne Yedin?</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <label class="fw-bold mb-2 small text-muted">Besin Seçimi</label>
+          <select name="besin_adi" id="besinSec" class="form-select mb-3" onchange="hesaplaYemek()" style="border-radius: 12px; padding: 12px;" required>
+             <option value="" data-kal="0">Listeden Seçin...</option>
+             <option value="Haşlanmış Yumurta" data-kal="155">Haşlanmış Yumurta (100g = 155 kcal)</option>
+             <option value="Tavuk Göğsü (Izgara)" data-kal="165">Tavuk Göğsü Izgara (100g = 165 kcal)</option>
+             <option value="Pirinç Pilavı" data-kal="130">Pirinç Pilavı (100g = 130 kcal)</option>
+             <option value="Tam Buğday Ekmek" data-kal="247">Tam Buğday Ekmek (100g = 247 kcal)</option>
+             <option value="Yulaf Ezmesi" data-kal="389">Yulaf Ezmesi (100g = 389 kcal)</option>
+             <option value="Zeytinyağlı Salata" data-kal="120">Zeytinyağlı Salata (100g = 120 kcal)</option>
+          </select>
 
+          <label class="fw-bold mb-2 small text-muted">Miktar (Gram)</label>
+          <input type="number" name="miktar" id="yemekMiktar" class="form-control mb-3" placeholder="Örn: 150" oninput="hesaplaYemek()" style="border-radius: 12px; padding: 12px;" required>
+          
+          <input type="hidden" name="toplam_kalori" id="gizliYemekKalori">
+          
+          <div class="p-3 mt-2 rounded-3 text-center" style="background: #f0fdf4; border: 1px dashed #22c55e;">
+              <span class="text-success fw-bold">Hesaplanan: <span id="gosterYemekKalori" class="fs-4">0</span> kcal</span>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="submit" class="btn btn-success w-100" style="border-radius: 12px; padding: 12px; font-weight: 600;">Günlüğe Ekle</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="egzersizModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 20px;">
+      <form action="islem_v2.php?is=egzersiz_ekle" method="POST">
+        <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold text-primary"><i class="fas fa-running"></i> Hangi Sporu Yaptın?</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <label class="fw-bold mb-2 small text-muted">Egzersiz Seçimi</label>
+          <select name="egzersiz_adi" id="sporSec" class="form-select mb-3" onchange="hesaplaSpor()" style="border-radius: 12px; padding: 12px;" required>
+             <option value="" data-kal="0">Listeden Seçin...</option>
+             <option value="Tempolu Yürüyüş" data-kal="5">Tempolu Yürüyüş (1 dk = 5 kcal)</option>
+             <option value="Koşu" data-kal="10">Koşu (1 dk = 10 kcal)</option>
+             <option value="Pilates" data-kal="4">Pilates (1 dk = 4 kcal)</option>
+             <option value="Ağırlık Antrenmanı" data-kal="6">Ağırlık Antrenmanı (1 dk = 6 kcal)</option>
+             <option value="Bisiklet / Eliptik" data-kal="7">Bisiklet / Eliptik (1 dk = 7 kcal)</option>
+             <option value="Yüzme" data-kal="8">Yüzme (1 dk = 8 kcal)</option>
+          </select>
+
+          <label class="fw-bold mb-2 small text-muted">Süre (Dakika)</label>
+          <input type="number" name="sure_dk" id="sporSure" class="form-control mb-3" placeholder="Örn: 45" oninput="hesaplaSpor()" style="border-radius: 12px; padding: 12px;" required>
+          
+          <input type="hidden" name="yakilan_kalori" id="gizliSporKalori">
+          
+          <div class="p-3 mt-2 rounded-3 text-center" style="background: #eff6ff; border: 1px dashed #3b82f6;">
+              <span class="text-primary fw-bold">Yakılan: <span id="gosterSporKalori" class="fs-4">0</span> kcal</span>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="submit" class="btn btn-primary w-100" style="border-radius: 12px; padding: 12px; font-weight: 600;">Günlüğe Ekle</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Otomatik Hesaplama Kodları
+function hesaplaYemek() {
+    let secim = document.getElementById('besinSec');
+    let kalori100g = secim.options[secim.selectedIndex].getAttribute('data-kal');
+    let miktar = document.getElementById('yemekMiktar').value;
+    let toplam = Math.round((kalori100g / 100) * miktar);
+    let sonuc = isNaN(toplam) ? 0 : toplam;
+    document.getElementById('gosterYemekKalori').innerText = sonuc;
+    document.getElementById('gizliYemekKalori').value = sonuc;
+}
+function hesaplaSpor() {
+    let secim = document.getElementById('sporSec');
+    let kalori1dk = secim.options[secim.selectedIndex].getAttribute('data-kal');
+    let sure = document.getElementById('sporSure').value;
+    let toplam = Math.round(kalori1dk * sure);
+    let sonuc = isNaN(toplam) ? 0 : toplam;
+    document.getElementById('gosterSporKalori').innerText = sonuc;
+    document.getElementById('gizliSporKalori').value = sonuc;
+}
+</script>
 </body>
 </html>
