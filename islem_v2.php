@@ -354,6 +354,28 @@ try {
         exit();
     }
 
+    // --- PREMIUM İPTAL İŞLEMİ ---
+    elseif (isset($_GET['is']) && $_GET['is'] == 'premium_iptal') {
+        // Oturumdaki kullanıcı ID'sini alıyoruz
+        $uid = $_SESSION['user_id'];
+        
+        try {
+            // Veritabanında is_premium sütununu 0 yapıyoruz
+            $sorgu = $conn->prepare("UPDATE kullanicilar SET is_premium = 0 WHERE id = ?");
+            $sonuc = $sorgu->execute([$uid]);
+            
+            if ($sonuc) {
+                // Başarılıysa panel.php'ye geri gönder
+                header("Location: panel.php?durum=iptal_basarili");
+                exit();
+            } else {
+                echo "Güncelleme sırasında bir hata oluştu.";
+            }
+        } catch (PDOException $e) {
+            die("Veritabanı hatası: " . $e->getMessage());
+        }
+    }
+
     // --- 18. EGZERSİZ EKLEME İŞLEMİ (EGZERSİZ GÜNLÜĞÜ) ---
     elseif ($is == 'egzersiz_ekle') {
         $user_id = $_SESSION['user_id'];

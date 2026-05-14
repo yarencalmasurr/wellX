@@ -195,12 +195,12 @@ $mevcut_kayit = $kontrol->fetch();
 <body>
 
 <div class="sidebar">
-    <a href="panel.php" class="logo"><i class="fas fa-heartbeat"></i> Sağlık Takip</a>
-    <?php if($is_premium == 1): ?>
-        <div style="margin: -25px 0 30px 40px;">
-            <span style="background: linear-gradient(135deg, #f59e0b, #fbbf24); color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                <i class="fas fa-crown"></i> PREMIUM
-            </span>
+    <h2><i class="fas fa-heartbeat"></i> Sağlık Takibim</h2>
+    <?php if ($is_premium): ?>
+        <div onclick="document.getElementById('premiumModal').style.display='flex'" 
+             style="color: #f1c40f; font-size: 12px; font-weight: bold; margin-bottom: 20px; cursor: pointer; display: inline-block;" 
+             title="Üyeliği Yönet">
+            <i class="fas fa-crown"></i> PREMIUM
         </div>
     <?php endif; ?>
     
@@ -565,5 +565,18 @@ function hesaplaSpor() {
     document.getElementById('gizliSporKalori').value = sonuc;
 }
 </script>
+
+<div id="premiumModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; justify-content:center; align-items:center; font-family:sans-serif;">
+    <div style="background:white; padding:30px; border-radius:15px; text-align:center; max-width:350px; color:#333;">
+        <i class="fas fa-exclamation-triangle" style="font-size:40px; color:#e74c3c; margin-bottom:15px;"></i>
+        <h3>Premium İptali</h3>
+        <p>Premium özelliklere erişiminizi kaybetmek istediğinize emin misiniz?</p>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
+            <a href="islem_v2.php?is=premium_iptal" style="background:#e74c3c; color:white; text-decoration:none; padding:12px; border-radius:8px; font-weight:bold;">Evet, Üyeliğimi İptal Et</a>
+            <button onclick="document.getElementById('premiumModal').style.display='none'" style="background:#ddd; border:none; padding:12px; border-radius:8px; cursor:pointer;">Vazgeç</button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
