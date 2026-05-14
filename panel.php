@@ -454,19 +454,39 @@ function formuKapat() {
         <div class="modal-body p-4">
           <label class="fw-bold mb-2 small text-muted">Besin Seçimi</label>
           <select name="besin_adi" id="besinSec" class="form-select mb-3" onchange="hesaplaYemek()" style="border-radius: 12px; padding: 12px;" required>
-             <option value="" data-kal="0">Listeden Seçin...</option>
-             <option value="Haşlanmış Yumurta" data-kal="155">Haşlanmış Yumurta (100g = 155 kcal)</option>
-             <option value="Tavuk Göğsü (Izgara)" data-kal="165">Tavuk Göğsü Izgara (100g = 165 kcal)</option>
-             <option value="Pirinç Pilavı" data-kal="130">Pirinç Pilavı (100g = 130 kcal)</option>
-             <option value="Tam Buğday Ekmek" data-kal="247">Tam Buğday Ekmek (100g = 247 kcal)</option>
-             <option value="Yulaf Ezmesi" data-kal="389">Yulaf Ezmesi (100g = 389 kcal)</option>
-             <option value="Zeytinyağlı Salata" data-kal="120">Zeytinyağlı Salata (100g = 120 kcal)</option>
+             <option value="" data-kal="0" data-birim="Adet/Kaşık">Listeden Seçin...</option>
+             
+             <optgroup label="Kahvaltılıklar">
+                 <option value="Haşlanmış Yumurta" data-kal="75" data-birim="Adet">Haşlanmış Yumurta (1 Adet - 75 kcal)</option>
+                 <option value="Zeytin" data-kal="5" data-birim="Adet">Zeytin (1 Adet - 5 kcal)</option>
+                 <option value="Beyaz Peynir" data-kal="90" data-birim="İnce Dilim">Beyaz Peynir (1 İnce Dilim - 90 kcal)</option>
+                 <option value="Tam Buğday Ekmek" data-kal="65" data-birim="Dilim">Tam Buğday Ekmek (1 Dilim - 65 kcal)</option>
+                 <option value="Yulaf Ezmesi" data-kal="30" data-birim="Yemek Kaşığı">Yulaf Ezmesi (1 Yemek Kaşığı - 30 kcal)</option>
+             </optgroup>
+
+             <optgroup label="Ana Yemekler">
+                 <option value="Izgara Tavuk" data-kal="165" data-birim="Porsiyon">Izgara Tavuk (1 Porsiyon - 165 kcal)</option>
+                 <option value="Izgara Köfte" data-kal="60" data-birim="Adet">Izgara Köfte (1 Adet - 60 kcal)</option>
+                 <option value="Pirinç Pilavı" data-kal="45" data-birim="Yemek Kaşığı">Pirinç Pilavı (1 Yemek Kaşığı - 45 kcal)</option>
+                 <option value="Bulgur Pilavı" data-kal="35" data-birim="Yemek Kaşığı">Bulgur Pilavı (1 Yemek Kaşığı - 35 kcal)</option>
+                 <option value="Mercimek Çorbası" data-kal="130" data-birim="Kase">Mercimek Çorbası (1 Kase - 130 kcal)</option>
+                 <option value="Zeytinyağlı Sebze" data-kal="150" data-birim="Porsiyon">Zeytinyağlı Sebze Yemeği (1 Porsiyon - 150 kcal)</option>
+             </optgroup>
+
+             <optgroup label="Ara Öğün & Atıştırmalık">
+                 <option value="Elma" data-kal="50" data-birim="Adet (Orta)">Elma (1 Adet Orta - 50 kcal)</option>
+                 <option value="Muz" data-kal="90" data-birim="Adet (Orta)">Muz (1 Adet Orta - 90 kcal)</option>
+                 <option value="Ceviz" data-kal="30" data-birim="Tam Adet">Ceviz (1 Tam Adet - 30 kcal)</option>
+                 <option value="Çiğ Badem" data-kal="6" data-birim="Adet">Çiğ Badem (1 Adet - 6 kcal)</option>
+                 <option value="Yoğurt" data-kal="20" data-birim="Yemek Kaşığı">Yoğurt (1 Yemek Kaşığı - 20 kcal)</option>
+             </optgroup>
           </select>
 
-          <label class="fw-bold mb-2 small text-muted">Miktar (Gram)</label>
-          <input type="number" name="miktar" id="yemekMiktar" class="form-control mb-3" placeholder="Örn: 150" oninput="hesaplaYemek()" style="border-radius: 12px; padding: 12px;" required>
+          <label class="fw-bold mb-2 small text-muted">Miktar (<span id="birimGosterge" class="text-primary">Adet/Kaşık</span>)</label>
+          <input type="number" name="miktar" id="yemekMiktar" class="form-control mb-3" placeholder="Örn: 2" oninput="hesaplaYemek()" style="border-radius: 12px; padding: 12px;" required>
           
           <input type="hidden" name="toplam_kalori" id="gizliYemekKalori">
+          <input type="hidden" name="birim" id="gizliBirim" value="Adet"> 
           
           <div class="p-3 mt-2 rounded-3 text-center" style="background: #f0fdf4; border: 1px dashed #22c55e;">
               <span class="text-success fw-bold">Hesaplanan: <span id="gosterYemekKalori" class="fs-4">0</span> kcal</span>
@@ -479,7 +499,6 @@ function formuKapat() {
     </div>
   </div>
 </div>
-
 <div class="modal fade" id="egzersizModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content" style="border-radius: 20px;">
@@ -518,15 +537,24 @@ function formuKapat() {
 </div>
 
 <script>
-// Otomatik Hesaplama Kodları
 function hesaplaYemek() {
     let secim = document.getElementById('besinSec');
-    let kalori100g = secim.options[secim.selectedIndex].getAttribute('data-kal');
-    let miktar = document.getElementById('yemekMiktar').value;
-    let toplam = Math.round((kalori100g / 100) * miktar);
-    let sonuc = isNaN(toplam) ? 0 : toplam;
-    document.getElementById('gosterYemekKalori').innerText = sonuc;
-    document.getElementById('gizliYemekKalori').value = sonuc;
+    let secilenOption = secim.options[secim.selectedIndex];
+    
+    // Seçilen besinin 1 birimlik kalorisini ve birim adını (Adet, Dilim vb.) alıyoruz
+    let kaloriBirim = parseFloat(secilenOption.getAttribute('data-kal')) || 0;
+    let birimTuru = secilenOption.getAttribute('data-birim') || 'Adet/Kaşık';
+    
+    let miktar = parseFloat(document.getElementById('yemekMiktar').value) || 0;
+    let toplam = Math.round(kaloriBirim * miktar); // Artık 100'e bölmüyoruz, direkt çarpıyoruz
+    
+    // Arayüzdeki yazıları güncelle
+    document.getElementById('birimGosterge').innerText = birimTuru;
+    document.getElementById('gosterYemekKalori').innerText = isNaN(toplam) ? 0 : toplam;
+    
+    // Veritabanına gidecek gizli inputları doldur
+    document.getElementById('gizliYemekKalori').value = isNaN(toplam) ? 0 : toplam;
+    document.getElementById('gizliBirim').value = birimTuru;
 }
 function hesaplaSpor() {
     let secim = document.getElementById('sporSec');

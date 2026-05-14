@@ -331,8 +331,9 @@ try {
         $toplam_kalori = $_POST['toplam_kalori'];
 
         // 1. Veriyi Beslenme Günlüğüne Ekle
-        $yemek_kaydet = $conn->prepare("INSERT INTO beslenme_gunlugu (user_id, tarih, besin_adi, miktar, birim, toplam_kalori) VALUES (?, ?, ?, ?, 'Gram', ?)");
-        $yemek_kaydet->execute([$user_id, $tarih, $besin_adi, $miktar, $toplam_kalori]);
+        $birim = $_POST['birim'] ?? 'Adet'; // Formdan gelen birimi al
+        $yemek_kaydet = $conn->prepare("INSERT INTO beslenme_gunlugu (user_id, tarih, besin_adi, miktar, birim, toplam_kalori) VALUES (?, ?, ?, ?, ?, ?)");
+        $yemek_kaydet->execute([$user_id, $tarih, $besin_adi, $miktar, $birim, $toplam_kalori]);
 
         // 2. Ana Tablodaki (aktivite_kayitlari) Toplam Kaloriyi Güncelle
         $kontrol = $conn->prepare("SELECT id FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
