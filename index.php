@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giriş Yap | WellX Sağlık Portalı</title>
+    <title>Giriş Yap | WellX </title>
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -118,7 +118,7 @@
 <div id="particles-js"></div>
 
 <div class="login-box" id="loginCard">
-    <h2>WellX Portal 🧬</h2>
+    <h2>WellX </h2>
     <p>Sağlıklı yaşam serüvenine yeniden hoş geldin.</p>
 
     <?php if(isset($_GET['hata'])): ?>

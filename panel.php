@@ -52,10 +52,9 @@ $bildirim_egzersiz = $conn->prepare("SELECT id FROM egzersiz_planlari WHERE user
 $bildirim_egzersiz->execute([$user_id, $bugun]);
 $yeni_egzersiz = $bildirim_egzersiz->fetch();
 
-// --- GENEL GÜNÜN ANTRENMANI (Duyuru) ---
-$genel_antrenman_sorgu = $conn->query("SELECT * FROM gunun_antrenmani ORDER BY id DESC LIMIT 1");
+// --- GENEL GÜNÜN ANTRENMANI (Sadece Bugünün Kaydını Getirir) ---
+$genel_antrenman_sorgu = $conn->query("SELECT * FROM gunun_antrenmani WHERE DATE(ekleme_tarihi) = CURDATE() ORDER BY id DESC LIMIT 1");
 $genel_antrenman = $genel_antrenman_sorgu->fetch(PDO::FETCH_ASSOC);
-
 // --- GÜNÜN TARİFİ ---
 $tarif_sorgu = $conn->prepare("
     SELECT t.*, k.ad_soyad 
