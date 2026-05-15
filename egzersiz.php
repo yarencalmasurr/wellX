@@ -61,7 +61,9 @@ $planlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
 <body>
 
 <div class="sidebar">
-    <div style="color:var(--blue); font-size:22px; font-weight:600; margin-bottom:40px;">🩺 Sağlık Takip</div>
+    <div style="font-size:28px; font-weight:800; margin-bottom:40px; color:#111827; letter-spacing:-1px;">
+    <span style="color:#ef4444;">❤</span> wellX
+</div>
     <a href="panel.php" class="menu-item">🏠 Özet Paneli</a>
     <a href="beslenme.php" class="menu-item">🥗 Beslenme Planım</a>
     <a href="egzersiz.php" class="menu-item active">🏋️ Egzersizlerim</a>

@@ -104,7 +104,8 @@ $mevcut_kayit = $kontrol->fetch();
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Sağlık Takip | Panel</title>
+    <title>wellX | Panel</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -190,13 +191,148 @@ $mevcut_kayit = $kontrol->fetch();
         .form-control:focus { background: white; border-color: var(--blue); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
         .btn-submit { background: var(--blue); color: white; padding: 16px; border-radius: 14px; font-weight: 600; width: 100%; border: none; transition: 0.3s;}
         .btn-submit:hover { background: #2563eb; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2); }
+        /* ===== WELLX MODERN TASARIM ===== */
+
+.sidebar {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    border-right: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar h2 {
+    font-size: 30px;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 10px;
+    letter-spacing: -1px;
+}
+
+.sidebar h2 i {
+    color: #ef4444;
+    filter: drop-shadow(0 0 8px rgba(239,68,68,0.4));
+}
+
+.menu-item {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s ease;
+    border: 1px solid transparent;
+}
+
+.menu-item i {
+    transition: 0.25s;
+}
+
+/* Hover efekti */
+.menu-item:hover {
+    background: linear-gradient(135deg, #eff6ff, #f0fdf4);
+    color: #2563eb;
+    transform: translateX(4px);
+    border-color: #dbeafe;
+    box-shadow: 0 6px 16px rgba(59,130,246,0.08);
+}
+
+.menu-item:hover i {
+    transform: scale(1.1);
+}
+
+/* Aktif menü */
+.menu-item.active {
+    background: linear-gradient(135deg, #dbeafe, #e0f2fe);
+    color: #2563eb;
+    font-weight: 700;
+    box-shadow: 0 10px 20px rgba(59,130,246,0.12);
+}
+
+/* Menü ikon renkleri */
+.menu-item:nth-of-type(1) i { color: #3b82f6; }
+.menu-item:nth-of-type(2) i { color: #10b981; }
+.menu-item:nth-of-type(3) i { color: #8b5cf6; }
+.menu-item:nth-of-type(4) i { color: #f59e0b; }
+.menu-item:nth-of-type(5) i { color: #06b6d4; }
+.menu-item:nth-of-type(6) i { color: #ec4899; }
+.menu-item:nth-of-type(7) i { color: #f97316; }
+.menu-item:nth-of-type(8) i { color: #6366f1; }
+
+/* Premium yazısı */
+.sidebar div[title="Üyeliği Yönet"] {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    padding: 8px 14px;
+    border-radius: 12px;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 10px rgba(245,158,11,0.15);
+}
+
+/* Çıkış butonu */
+.sidebar .menu-item.mt-2 {
+    margin-top: auto !important;
+    background: #fef2f2;
+    color: #ef4444 !important;
+    font-weight: 600;
+}
+
+.sidebar .menu-item.mt-2:hover {
+    background: #fee2e2;
+    color: #dc2626 !important;
+}
+
+/* Ana kartlar */
+.plan-card,
+.stat-card,
+.entry-form-card,
+.expert-card {
+    transition: 0.3s ease;
+}
+
+.plan-card:hover,
+.stat-card:hover,
+.expert-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 30px rgba(0,0,0,0.06);
+}
+
+/* İstatistik kartlarını canlı yap */
+.stat-card {
+    background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+}
+
+/* Hoş geldin yazısı */
+.page-header h1 {
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+/* Form alanları */
+.form-control {
+    background: #f8fafc;
+}
+
+.form-control:focus {
+    transform: scale(1.01);
+}
+
+/* Butonlar */
+.btn-submit,
+.premium-btn {
+    transition: all 0.3s ease;
+}
+
+.btn-submit:hover,
+.premium-btn:hover {
+    transform: translateY(-3px);
+}
     </style>
 </head>
 <body>
     
 
 <div class="sidebar">
-    <h2><i class="fas fa-heartbeat"></i> Sağlık Takibim</h2>
+    <h2><i class="fas fa-heartbeat"  style="color: #ef4444;"></i> wellX </h2>
+    
     <?php if ($is_premium): ?>
         <div onclick="document.getElementById('premiumModal').style.display='flex'" 
              style="color: #f1c40f; font-size: 12px; font-weight: bold; margin-bottom: 20px; cursor: pointer; display: inline-block;" 
@@ -242,6 +378,7 @@ $mevcut_kayit = $kontrol->fetch();
             </button>
         <?php endif; ?>
     </div>
+    
 
     <div class="experts-grid">
         <?php if ($matched_diyetisyen): ?>

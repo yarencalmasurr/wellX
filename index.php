@@ -119,7 +119,7 @@
 
 <div class="login-box" id="loginCard">
     <h2>WellX </h2>
-    <p>Sağlıklı yaşam serüvenine yeniden hoş geldin.</p>
+    <p>Sağlıklı yaşam serüvenine hoş geldin!</p>
 
     <?php if(isset($_GET['hata'])): ?>
         <div class="alert-error">

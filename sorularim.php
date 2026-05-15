@@ -31,6 +31,7 @@ function isActive($page, $current) { return ($page == $current) ? 'active' : '';
 <head>
     <meta charset="UTF-8">
     <title>Uzmana Sorular | Sağlık Takip</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -50,7 +51,9 @@ function isActive($page, $current) { return ($page == $current) ? 'active' : '';
 <body>
 
 <div class="sidebar">
-    <a href="panel.php" class="logo">🩺 Sağlık Takip</a>
+<div style="font-size:28px; font-weight:800; margin-bottom:40px; color:#111827; letter-spacing:-1px;">
+    <span style="color:#ef4444;">❤</span> wellX
+</div>
     <a href="panel.php" class="menu-item <?php echo isActive('panel.php', $current_page); ?>">🏠 Özet Paneli</a>
     <a href="beslenme.php" class="menu-item <?php echo isActive('beslenme.php', $current_page); ?>">🥗 Beslenme</a>
     <a href="egzersiz.php" class="menu-item <?php echo isActive('egzersiz.php', $current_page); ?>">🏋️ Egzersiz</a>

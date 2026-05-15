@@ -21,6 +21,7 @@ $rozetler = $sorgu->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <title>Rozetlerim | Sağlık Takibi</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Poppins', sans-serif; background: #f8fafc; display: flex; margin:0; }
@@ -33,7 +34,9 @@ $rozetler = $sorgu->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body>
     <div class="sidebar">
-        <h2 style="color:#6c5ce7;">🩺 Sağlık</h2>
+        <div style="font-size:28px; font-weight:800; margin-bottom:40px; color:#111827; letter-spacing:-1px;">
+    <span style="color:#ef4444;">❤</span> wellX
+</div>
         <a href="panel.php" style="display:block; margin-bottom:15px; text-decoration:none; color:#64748b;">🏠 Özet Panel</a>
         <a href="rozetlerim.php" style="display:block; margin-bottom:15px; text-decoration:none; color:#6c5ce7; font-weight:600;">🏆 Rozetlerim</a>
     </div>

@@ -31,7 +31,8 @@ $planlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Beslenme Planım | Sağlık Takibi</title>
+    <title>Beslenme Planım | wellX </title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2ecc71; --bg: #f4f7fe; }
@@ -51,7 +52,9 @@ $planlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
 <body>
 
 <div class="sidebar">
-    <div style="color:var(--primary); font-size:22px; font-weight:600; margin-bottom:40px;">🩺 Sağlık Takip</div>
+    <div style="font-size:28px; font-weight:800; margin-bottom:40px; color:#111827; letter-spacing:-1px;">
+    <span style="color:#ef4444;">❤</span> wellX
+</div>
     <a href="panel.php" class="menu-item">🏠 Özet Paneli</a>
     <a href="beslenme.php" class="menu-item active">🥗 Beslenme Planım</a>
     <a href="egzersiz.php" class="menu-item">🏋️ Egzersizlerim</a>

@@ -25,6 +25,7 @@ $user = $sorgu->fetch(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <title>Profil Ayarlarım</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -47,7 +48,9 @@ $user = $sorgu->fetch(PDO::FETCH_ASSOC);
 <body>
 
 <div class="sidebar">
-    <a href="panel.php" class="logo">🩺 Sağlık Takip</a>
+    <div style="font-size:28px; font-weight:800; margin-bottom:40px; color:#111827; letter-spacing:-1px;">
+    <span style="color:#ef4444;">❤</span> wellX
+</div>
     <a href="panel.php" class="menu-item">🏠 Özet Paneli</a>
     <a href="beslenme.php" class="menu-item">🥗 Beslenme</a>
     <a href="egzersiz.php" class="menu-item">🏋️ Egzersiz</a>

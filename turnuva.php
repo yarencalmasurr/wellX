@@ -17,6 +17,7 @@ $siralamalar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <title>Sağlık Takip | Turnuva</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -54,7 +55,9 @@ $siralamalar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
 <body>
 
 <div class="sidebar">
-    <a href="panel.php" style="text-decoration:none; color:#0f172a; font-size:22px; font-weight:600; display:block; margin-bottom:40px;">🩺 Sağlık Takip</a>
+    <div style="font-size:28px; font-weight:800; margin-bottom:40px; color:#111827; letter-spacing:-1px;">
+    <span style="color:#ef4444;">❤</span> wellX
+</div>
     <a href="panel.php" class="btn w-100 text-start mb-2"><i class="fas fa-home me-2"></i> Özet Paneli</a>
     <a href="turnuva.php" class="btn btn-primary w-100 text-start mb-2"><i class="fas fa-trophy me-2"></i> Turnuva</a>
 </div>
