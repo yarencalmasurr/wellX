@@ -1,94 +1,154 @@
 <?php
-/**
- * Proje: saglik_portali
- * Dosya: profil.php
- */
-
 session_start();
 include 'baglan.php';
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: index.php");
-    exit();
-}
-
+if (!isset($_SESSION['user_id'])) { header("Location: index.php"); exit(); }
 $user_id = $_SESSION['user_id'];
 
 // Mevcut kullanıcı verilerini çek
 $sorgu = $conn->prepare("SELECT * FROM kullanicilar WHERE id = ?");
 $sorgu->execute([$user_id]);
 $user = $sorgu->fetch(PDO::FETCH_ASSOC);
+$is_premium = $user['is_premium'] ?? 0;
 ?>
 
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Profil Ayarlarım</title>
+    <title>Profil Ayarlarım | WellX</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
-        :root { --blue: #0ea5e9; --bg: #f8fafc; --sidebar: #ffffff; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; display: flex; color: #1e293b; }
-        .sidebar { width: 260px; background: var(--sidebar); height: 100vh; padding: 30px 20px; box-shadow: 4px 0 24px rgba(0,0,0,0.03); position: fixed; }
-        .logo { font-size: 22px; font-weight: 600; color: #0f172a; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; text-decoration:none; }
-        .menu-item { display: flex; align-items: center; padding: 14px 18px; color: #64748b; text-decoration: none; border-radius: 12px; margin-bottom: 8px; transition: 0.2s; }
-        .menu-item.active { background: #f0f9ff; color: var(--blue); font-weight: 600; }
-        .main { margin-left: 260px; padding: 40px; width: calc(100% - 260px); }
+        :root { 
+            --blue: #3b82f6; --green: #10b981; 
+            --text-main: #1e293b; --text-muted: #64748b;
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.6);
+        }
+        body { font-family: 'Poppins', sans-serif; margin: 0; display: flex; color: var(--text-main); background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%); background-attachment: fixed; min-height: 100vh; }
+        #particles-js { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; pointer-events: none; }
         
-        .profile-card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 10px 15px rgba(0,0,0,0.04); max-width: 600px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 500; color: #64748b; font-size: 14px; }
-        input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; box-sizing: border-box; font-family: inherit; }
-        .btn-update { background: var(--blue); color: white; border: none; padding: 15px; border-radius: 14px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 20px; }
-        .alert { padding: 15px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; }
+        .sidebar { width: 260px; height: 100vh; padding: 30px 20px; position: fixed; z-index: 100; background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px); border-right: 1px solid var(--glass-border); box-shadow: 10px 0 30px rgba(0,0,0,0.03); display: flex; flex-direction: column; }
+        .sidebar h2 { font-size: 28px; font-weight: 800; color: #111827; margin-bottom: 10px; letter-spacing: -1px; display: flex; align-items: center; gap: 10px;}
+        .sidebar h2 i { color: #ef4444; }
+        .menu-item { display: flex; align-items: center; padding: 14px 18px; color: var(--text-muted); text-decoration: none; border-radius: 16px; margin-bottom: 8px; transition: all 0.3s ease; font-weight: 500; border: 1px solid transparent; }
+        .menu-item i { transition: 0.3s; width: 25px; }
+        .menu-item:hover { background: rgba(255, 255, 255, 0.9); color: var(--blue); transform: translateX(5px); box-shadow: 0 4px 15px rgba(59,130,246,0.05); }
+        .menu-item.active { background: linear-gradient(135deg, #dbeafe, #eff6ff); color: var(--blue); font-weight: 700; box-shadow: 0 8px 20px rgba(59,130,246,0.1); border-color: white; }
+        
+        .menu-item:nth-of-type(1) i { color: #3b82f6; }
+        .menu-item:nth-of-type(2) i { color: #10b981; }
+        .menu-item:nth-of-type(3) i { color: #8b5cf6; }
+        .menu-item:nth-of-type(4) i { color: #f59e0b; }
+        .menu-item:nth-of-type(5) i { color: #06b6d4; }
+        .menu-item:nth-of-type(6) i { color: #ec4899; }
+        .menu-item:nth-of-type(7) i { color: #f97316; }
+        .menu-item:nth-of-type(8) i { color: #6366f1; }
+        .sidebar .logout-btn { margin-top: auto !important; background: rgba(254, 226, 226, 0.6); color: #ef4444 !important; font-weight: 600; }
+        
+        .main { margin-left: 260px; padding: 40px 50px; width: calc(100% - 260px); position: relative; z-index: 10; box-sizing: border-box;}
+        .page-header { display: flex; align-items: center; gap: 15px; margin-bottom: 40px; }
+        .header-icon { background: linear-gradient(135deg, #6366f1, #4f46e5); width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; box-shadow: 0 8px 20px rgba(99,102,241,0.3);}
+        .page-header h1 { font-size: 32px; font-weight: 800; margin: 0; letter-spacing: -1px; color: #0f172a;}
+
+        .glass-card { background: var(--glass-bg); backdrop-filter: blur(15px); border-radius: 24px; border: 1px solid var(--glass-border); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.03); padding: 40px; max-width: 600px; margin-bottom: 30px; }
+        
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; margin-left: 5px; text-transform: uppercase;}
+        
+        .input-icon-wrapper { position: relative; width: 100%; }
+        .input-icon-wrapper i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--blue);}
+        .input-icon-wrapper input { width: 100%; padding: 15px 15px 15px 50px; font-weight: 500; color: var(--text-main); border-radius: 14px; border: 1px solid #e2e8f0; background: rgba(255,255,255,0.8); font-size: 15px; transition: 0.3s; box-sizing: border-box; font-family: inherit;}
+        .input-icon-wrapper input:focus { background: white; border-color: var(--blue); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); outline: none;}
+
+        .btn-update { background: linear-gradient(135deg, var(--blue) 0%, #2563eb 100%); color: white; padding: 16px; border-radius: 16px; font-weight: 600; width: 100%; border: none; transition: 0.3s; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2); font-size: 15px;}
+        .btn-update:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(59, 130, 246, 0.3); }
     </style>
 </head>
 <body>
-
+<div id="particles-js"></div>
 <div class="sidebar">
-    <div style="font-size:28px; font-weight:800; margin-bottom:40px; color:#111827; letter-spacing:-1px;">
-    <span style="color:#ef4444;">❤</span> wellX
-</div>
-    <a href="panel.php" class="menu-item">🏠 Özet Paneli</a>
-    <a href="beslenme.php" class="menu-item">🥗 Beslenme</a>
-    <a href="egzersiz.php" class="menu-item">🏋️ Egzersiz</a>
-    <a href="gelisim.php" class="menu-item">📈 Gelişim</a>
-    <a href="profil.php" class="menu-item active">👤 Profil Ayarları</a>
-    <a href="cikis.php" class="menu-item" style="color:#ef4444; margin-top: 40px;">🚪 Çıkış Yap</a>
+    <h2><i class="fas fa-heartbeat"></i> wellX </h2>
+    <?php if ($is_premium): ?>
+        <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); padding: 8px 14px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(245,158,11,0.15); color: #d97706; font-size: 12px; font-weight: bold; margin-bottom: 20px;">
+            <i class="fas fa-crown"></i> PREMIUM
+        </div>
+    <?php endif; ?>
+    <?php 
+        $current_page = basename($_SERVER['PHP_SELF']); 
+        if(!function_exists('isActive')){ function isActive($page, $current) { return ($page == $current) ? 'active' : ''; } }
+    ?>
+    <nav style="flex-grow: 1;">
+        <a href="panel.php" class="menu-item <?php echo isActive('panel.php', $current_page); ?>"><i class="fas fa-home"></i> Özet Paneli</a>
+        <a href="beslenme.php" class="menu-item <?php echo isActive('beslenme.php', $current_page); ?>"><i class="fas fa-apple-alt"></i> Beslenme</a>
+        <a href="egzersiz.php" class="menu-item <?php echo isActive('egzersiz.php', $current_page); ?>"><i class="fas fa-dumbbell"></i> Egzersiz</a>
+        <a href="sorularim.php" class="menu-item <?php echo isActive('sorularim.php', $current_page); ?>"><i class="fas fa-envelope-open-text"></i> Uzmana Sorular</a>
+        <a href="gelisim.php" class="menu-item <?php echo isActive('gelisim.php', $current_page); ?>"><i class="fas fa-chart-line"></i> Gelişim</a>
+        <a href="rozetlerim.php" class="menu-item <?php echo isActive('rozetlerim.php', $current_page); ?>"><i class="fas fa-medal"></i> Rozetlerim</a>
+        <a href="turnuva.php" class="menu-item <?php echo isActive('turnuva.php', $current_page); ?>"><i class="fas fa-trophy"></i> Turnuva</a>
+        <a href="profil.php" class="menu-item <?php echo isActive('profil.php', $current_page); ?>"><i class="fas fa-user"></i> Profil</a>
+    </nav>
+    <a href="cikis.php" class="menu-item logout-btn"><i class="fas fa-sign-out-alt"></i> Çıkış Yap</a>
 </div>
 
 <div class="main">
-    <h1>Profil Ayarların</h1>
+    <div class="page-header">
+        <div class="header-icon"><i class="fas fa-user-cog"></i></div>
+        <h1>Profil Ayarların</h1>
+    </div>
 
     <?php if(isset($_GET['durum'])): ?>
-        <div class="alert" style="background: #dcfce7; color: #166534;">✅ Bilgilerin başarıyla güncellendi.</div>
+        <div class="alert alert-success" style="border-radius: 16px; background: rgba(220, 252, 231, 0.9); color: #166534; border: 1px solid #bbf7d0; font-weight:500; max-width: 600px;">
+            <i class="fas fa-check-circle me-2"></i> Bilgilerin başarıyla güncellendi.
+        </div>
     <?php endif; ?>
 
-    <div class="profile-card">
+    <div class="glass-card">
         <form action="islem_v2.php?is=profil_guncelle" method="POST">
             <div class="form-group">
                 <label>Ad Soyad</label>
-                <input type="text" name="ad_soyad" value="<?php echo htmlspecialchars($user['ad_soyad']); ?>" required>
+                <div class="input-icon-wrapper">
+                    <i class="fas fa-id-card"></i>
+                    <input type="text" name="ad_soyad" value="<?php echo htmlspecialchars($user['ad_soyad']); ?>" required>
+                </div>
             </div>
             <div class="form-group">
                 <label>Kullanıcı Adı (Giriş için)</label>
-                <input type="text" name="kullanici_adi" value="<?php echo htmlspecialchars($user['kullanici_adi']); ?>" required>
+                <div class="input-icon-wrapper">
+                    <i class="fas fa-at"></i>
+                    <input type="text" name="kullanici_adi" value="<?php echo htmlspecialchars($user['kullanici_adi']); ?>" required>
+                </div>
             </div>
             <div class="form-group">
                 <label>E-posta Adresi</label>
-                <input type="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
+                <div class="input-icon-wrapper">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
+                </div>
             </div>
-            <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 30px 0;">
-            <div class="form-group">
-                <label>Yeni Şifre (Değiştirmek istemiyorsanız boş bırakın)</label>
-                <input type="password" name="yeni_sifre" placeholder="••••••••">
+            
+            <hr style="border: 0; border-top: 2px dashed rgba(0,0,0,0.08); margin: 35px 0;">
+            
+            <div class="form-group mb-0">
+                <label>Yeni Şifre <span style="text-transform:none; font-weight:500;">(Değiştirmek istemiyorsanız boş bırakın)</span></label>
+                <div class="input-icon-wrapper">
+                    <i class="fas fa-lock" style="color:#f59e0b;"></i>
+                    <input type="password" name="yeni_sifre" placeholder="••••••••">
+                </div>
             </div>
-            <button type="submit" class="btn-update">Ayarları Kaydet</button>
+            
+            <button type="submit" class="btn-update mt-4"><i class="fas fa-save me-2"></i> Ayarları Kaydet</button>
         </form>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+<script>
+    particlesJS("particles-js", { "particles": { "number": { "value": 40 }, "color": { "value": "#3b82f6" }, "opacity": { "value": 0.2 }, "size": { "value": 4 }, "line_linked": { "enable": true, "color": "#3b82f6", "opacity": 0.15 }, "move": { "enable": true, "speed": 1.5 } } });
+</script>
 </body>
 </html>

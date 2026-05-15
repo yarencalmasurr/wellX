@@ -1,10 +1,4 @@
 <?php
-/**
- * Proje: saglik_portali
- * Dosya: diyetisyen_paneli.php
- * Açıklama: Diyetisyenin tarif paylaştığı, danışanları ve yemek günlüğünü takip ettiği panel
- */
-
 session_start();
 include 'baglan.php';
 
@@ -18,7 +12,7 @@ $diyetisyen_id = $_SESSION['user_id'];
 $bugun = date('Y-m-d');
 
 try {
-    // 1. Aktif Danışanları ve Bugün Yedikleri Yemekleri Çek (YENİ SİSTEM)
+    // 1. Aktif Danışanları ve Bugün Yedikleri Yemekleri Çek
     $sorgu = $conn->prepare("
         SELECT k.id, k.ad_soyad, k.email, 
         (SELECT SUM(alinan_kalori) FROM aktivite_kayitlari WHERE user_id = k.id AND kayit_tarihi = ?) as bugunku_kalori,
@@ -33,7 +27,7 @@ try {
     $sorgu->execute([$bugun, $bugun, $diyetisyen_id]);
     $danisanlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
     
-    // 2. Tarif İstatistiklerini Çek
+    // 2. Geçmiş Tarif İstatistiklerini Çek (Son 5 Tarif)
     $istatistik_sorgu = $conn->prepare("
         SELECT t.tarif_baslik, t.ekleme_tarihi, 
                COALESCE(AVG(p.puan), 0) as ort_puan, 
@@ -42,12 +36,12 @@ try {
         LEFT JOIN tarif_puanlari p ON t.id = p.tarif_id 
         WHERE t.diyetisyen_id = ? 
         GROUP BY t.id 
-        ORDER BY t.ekleme_tarihi DESC
+        ORDER BY t.ekleme_tarihi DESC LIMIT 5
     ");
     $istatistik_sorgu->execute([$diyetisyen_id]);
     $tarifler = $istatistik_sorgu->fetchAll(PDO::FETCH_ASSOC);
 
-    // 3. Gelen Soruları Çek (Sadece Bekleyenler)
+    // 3. Gelen Soruları Çek
     $soru_sorgu = $conn->prepare("
         SELECT us.*, k.ad_soyad as danisan_adi 
         FROM uzman_sorulari us 
@@ -67,91 +61,79 @@ try {
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Diyetisyen Yönetim Paneli</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diyetisyen Paneli | WellX Elite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         :root { 
-            --primary: #1e293b; 
-            --accent: #10b981; 
-            --bg: #f8fafc; 
-            --card-bg: #ffffff;
-            --text-main: #334155;
-            --text-muted: #94a3b8;
+            --accent: #10b981; --accent-dark: #059669;
+            --text-main: #1e293b; --text-muted: #64748b;
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.6);
         }
-        body { background: var(--bg); font-family: 'Poppins', sans-serif; margin: 0; display: flex; color: var(--text-main); }
+        body { font-family: 'Poppins', sans-serif; margin: 0; display: flex; color: var(--text-main); background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #a7f3d0 100%); background-attachment: fixed; min-height: 100vh; }
+        #particles-js { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; pointer-events: none; }
         
-        /* Modern Sidebar */
-        .sidebar { 
-            width: 260px; 
-            background: var(--primary); 
-            height: 100vh; 
-            color: white; 
-            padding: 40px 30px; 
-            position: fixed; 
-            box-shadow: 4px 0 24px rgba(0,0,0,0.06); 
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-            z-index: 1000;
-        }
-        .sidebar .logo { font-size: 22px; font-weight: 700; margin-bottom: 40px; color: white; display: flex; align-items: center; gap: 12px; text-decoration: none; }
-        .sidebar .logo i { color: var(--accent); font-size: 26px; }
+        .sidebar { width: 260px; height: 100vh; padding: 30px 20px; position: fixed; z-index: 100; background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px); border-right: 1px solid var(--glass-border); box-shadow: 10px 0 30px rgba(0,0,0,0.03); display: flex; flex-direction: column; }
+        .sidebar h2 { font-size: 26px; font-weight: 800; color: #111827; margin-bottom: 30px; letter-spacing: -1px; display: flex; align-items: center; gap: 10px;}
+        .sidebar h2 i { color: var(--accent); }
+        .user-info { background: rgba(255,255,255,0.7); padding: 15px; border-radius: 16px; margin-bottom: 30px; border: 1px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.02);}
+        .user-info p { margin: 0; font-size: 13px; color: var(--text-muted); font-weight:500;}
+        .user-info strong { font-size: 16px; color: var(--text-main); display: block; margin-top: 4px; }
         
-        .user-info { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 30px; }
-        .user-info p { margin: 0; font-size: 14px; color: #cbd5e1; }
-        .user-info strong { font-size: 16px; color: white; display: block; margin-top: 4px; }
+        .menu-item { display: flex; align-items: center; padding: 14px 18px; color: var(--text-muted); text-decoration: none; border-radius: 16px; margin-bottom: 8px; transition: 0.3s; font-weight: 500; border: 1px solid transparent; }
+        .menu-item.active { background: linear-gradient(135deg, #dcfce7, #ecfdf5); color: var(--accent-dark); font-weight: 700; box-shadow: 0 8px 20px rgba(16,185,129,0.1); border-color: white; }
+        .logout-btn { margin-top: auto !important; background: rgba(254, 226, 226, 0.6); color: #ef4444 !important; font-weight: 600; text-decoration:none; padding: 14px 18px; border-radius:16px; transition:0.3s; display:flex; align-items:center;}
+        .logout-btn:hover { background: #fee2e2; color: #dc2626 !important; }
+
+        .main { margin-left: 260px; padding: 40px 50px; width: calc(100% - 260px); position: relative; z-index: 10; box-sizing: border-box;}
+        .page-title { font-size: 28px; font-weight: 800; margin-top: 0; margin-bottom: 30px; color: #0f172a; letter-spacing:-0.5px;}
+
+        .glass-card { background: var(--glass-bg); backdrop-filter: blur(15px); border-radius: 24px; border: 1px solid var(--glass-border); box-shadow: 0 15px 35px rgba(0,0,0,0.03); padding: 30px; transition: 0.3s ease; }
+        .glass-card h3 { margin-top: 0; margin-bottom: 20px; font-size: 18px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 10px; }
         
-        .sidebar nav { flex-grow: 1; }
-        .sidebar .logout-btn { margin-top: auto; color: #fca5a5; display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 12px; border-radius: 12px; transition: 0.3s; font-weight: 500; }
-        .sidebar .logout-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-
-        /* Main Content */
-        .main { margin-left: 260px; padding: 40px 50px; width: calc(100% - 260px); box-sizing: border-box; }
-        .page-title { font-size: 26px; font-weight: 700; margin-top: 0; margin-bottom: 30px; color: #0f172a; }
-
-        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-
-        .card { background: var(--card-bg); padding: 30px; border-radius: 24px; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.04); margin-bottom: 30px; border: 1px solid rgba(226,232,240,0.8); }
-        .card h3 { margin-top: 0; display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 20px; }
+        /* Grid Güncellemesi */
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; align-items: start; }
         
-        label { display: block; font-size: 14px; font-weight: 500; color: #475569; margin-bottom: 8px; }
-        input[type="text"], textarea { width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid #e2e8f0; background: #f8fafc; margin-bottom: 20px; box-sizing: border-box; font-family: inherit; font-size: 14px; transition: all 0.3s; }
-        input[type="text"]:focus, textarea:focus { outline: none; border-color: var(--accent); background: white; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); }
-        textarea { resize: vertical; min-height: 120px; }
-
-        .btn-custom { background: var(--accent); color: white; border: none; padding: 14px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 15px; width: 100%; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-custom:hover { background: #059669; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,0.2); color:white;}
+        input[type="text"], textarea { width: 100%; padding: 15px 18px; border-radius: 16px; border: 1px solid #e2e8f0; background: rgba(255,255,255,0.9); margin-bottom: 20px; font-family: inherit; font-size: 14px; transition: 0.3s; }
+        input[type="text"]:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); background: white;}
+        .btn-custom { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); color: white; border: none; padding: 15px 24px; border-radius: 16px; cursor: pointer; font-weight: 600; font-size: 15px; width: 100%; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 20px rgba(16,185,129,0.2);}
+        .btn-custom:hover { transform: translateY(-2px); box-shadow: 0 15px 25px rgba(16,185,129,0.3); color:white;}
         
-        .alert-msg { background: #dcfce7; color: #166534; padding: 15px 20px; border-radius: 12px; font-weight: 500; font-size: 14px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
-        .tarif-box { background: linear-gradient(to right, #ffffff, #f0fdf4); border: 2px dashed #a7f3d0; }
+        /* Geçmiş Liste Tasarımı */
+        .history-list { display: flex; flex-direction: column; gap: 15px; }
+        .history-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.8); padding: 15px 20px; border-radius: 16px; border: 1px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.02); transition: 0.2s;}
+        .history-item:hover { background: white; transform: translateX(5px); }
+        .history-date { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display:block;}
+        .history-title { font-weight: 700; color: var(--text-main); font-size: 15px; }
+        .history-stats { text-align: right; }
+        .history-stats span { display: block; font-size: 12px; font-weight: 600; color: #166534; background: #dcfce7; padding: 4px 10px; border-radius: 10px; margin-bottom: 4px;}
 
-        .student-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-bottom: 15px; transition: 0.2s;}
-        .student-item:hover { border-color: #cbd5e1; }
+        .student-item { background: rgba(255,255,255,0.6); border: 1px solid white; border-radius: 18px; padding: 20px; margin-bottom: 15px; transition: 0.3s;}
+        .student-item:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.04); background: white;}
         .student-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         
-        .stat-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .stat-table th { text-align: left; padding: 12px; color: #64748b; font-size: 13px; border-bottom: 2px solid #e2e8f0; }
-        .stat-table td { padding: 15px 12px; color: #334155; font-size: 14px; border-bottom: 1px solid #f1f5f9; }
-        .badge-success { background: #dcfce7; color: #166534; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        
-        /* Modal İçi Yemek Listesi */
-        .yemek-liste-kutu { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-top: 10px; font-size: 14px; color: #334155; line-height: 1.6;}
+        .alert-msg { background: #dcfce7; color: #166534; padding: 15px 20px; border-radius: 16px; font-weight: 600; font-size: 14px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; border:1px solid #bbf7d0;}
+        .modal-content { border-radius: 24px; border: none; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); box-shadow: 0 25px 50px rgba(0,0,0,0.1);}
     </style>
 </head>
 <body>
 
+<div id="particles-js"></div>
+
 <div class="sidebar">
-    <a href="diyetisyen_paneli.php" class="logo"><i class="fas fa-apple-alt"></i> Diyetisyen</a>
-    
+    <h2><i class="fas fa-apple-alt"></i> Diyetisyen</h2>
     <div class="user-info">
-        <p>Hoş Geldin,</p>
+        <p>Hoş Geldiniz,</p>
         <strong><?php echo htmlspecialchars($_SESSION['ad_soyad']); ?></strong>
     </div>
-
-    <a href="cikis.php" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Çıkış Yap</a>
+    <nav style="flex-grow: 1;">
+        <a href="diyetisyen_paneli.php" class="menu-item active"><i class="fas fa-home me-2"></i> Yönetim Paneli</a>
+    </nav>
+    <a href="cikis.php" class="logout-btn"><i class="fas fa-sign-out-alt me-2"></i> Çıkış Yap</a>
 </div>
 
 <div class="main">
@@ -166,150 +148,146 @@ try {
     <h2 class="page-title">Bugün danışanların için neler hazırladın?</h2>
 
     <div class="dashboard-grid">
-        
-        <div class="left-col">
-            <div class="card tarif-box">
-                <h3><i class="fas fa-utensils" style="color: var(--accent);"></i> Günün Tarifini Paylaş</h3>
-                <form action="islem_v2.php?is=tarif_paylas" method="POST">
-                    <label>Tarif Başlığı</label>
-                    <input type="text" name="tarif_baslik" placeholder="Örn: Avokadolu Omlet" required>
-                    
-                    <label>Tarif Detayları ve Malzemeler</label>
-                    <textarea name="tarif_icerik" placeholder="Detayları buraya yazın..." required></textarea>
-                    
-                    <button type="submit" class="btn-custom"><i class="fas fa-share"></i> Tarifi Yayınla</button>
-                </form>
-            </div>
-
-            <div class="card">
-                <h3><i class="fas fa-star" style="color: #f59e0b;"></i> Tarif Başarı İstatistikleri</h3>
-                <?php if($tarifler): ?>
-                    <table class="stat-table">
-                        <thead>
-                            <tr>
-                                <th>TARİF</th>
-                                <th>ORT. PUAN</th>
-                                <th>KATILIM</th>
-                                <th>TARİH</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach($tarifler as $t): ?>
-                                <tr>
-                                    <td style="font-weight: 500;"><?php echo htmlspecialchars($t['tarif_baslik']); ?></td>
-                                    <td><i class="fas fa-star" style="color: #f59e0b; font-size:12px;"></i> <?php echo number_format($t['ort_puan'], 1); ?></td>
-                                    <td><span class="badge-success"><?php echo $t['katilim']; ?> Kişi</span></td>
-                                    <td style="color: #94a3b8; font-size: 13px;"><?php echo date('d.m.Y', strtotime($t['ekleme_tarihi'])); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                <?php else: ?>
-                    <p style="color: var(--text-muted); font-size: 14px;">Henüz puanlanan bir tarifiniz bulunmuyor.</p>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <div class="right-col">
-            <div class="card" style="border-top: 5px solid var(--accent);">
-                <h3><i class="fas fa-user-friends" style="color: var(--accent);"></i> Aktif Danışanlarım</h3>
+        <div class="glass-card" style="border-top: 5px solid var(--accent);">
+            <h3><i class="fas fa-utensils" style="color: var(--accent);"></i> Günün Tarifini Paylaş</h3>
+            <form action="islem_v2.php?is=tarif_paylas" method="POST">
+                <label style="font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:8px; margin-left:5px;">Tarif Başlığı</label>
+                <input type="text" name="tarif_baslik" placeholder="Örn: Avokadolu Fit Omlet" required>
                 
-                <?php if($danisanlar): ?>
-                    <?php foreach($danisanlar as $d): ?>
-                        <div class="student-item">
-                            <div class="student-header">
-                                <div>
-                                    <h4 style="margin:0 0 5px 0; font-size: 16px; color:#1e293b; display:flex; align-items:center; gap:8px;">
-                                        <i class="fas fa-user-circle" style="color:#cbd5e1;"></i> 
-                                        <?php echo htmlspecialchars($d['ad_soyad']); ?>
-                                        <button type="button" class="btn btn-sm btn-outline-success rounded-pill" style="font-size:10px; padding:2px 8px;" data-bs-toggle="modal" data-bs-target="#yemekModal<?php echo $d['id']; ?>">
-                                            <i class="fas fa-search me-1"></i> Ne Yedi?
-                                        </button>
-                                    </h4>
-                                    <span style="font-size: 13px; color: var(--text-muted);"><?php echo htmlspecialchars($d['email']); ?></span>
-                                </div>
-                                <div style="text-align: right;">
-                                    <span style="font-size: 12px; color: #64748b; display: block;">Bugün Alınan</span>
-                                    <strong style="color: var(--accent); font-size: 15px;"><?php echo $d['bugunku_kalori'] ?? 0; ?> kcal</strong>
-                                </div>
-                            </div>
-                            
-                            <form action="islem_v2.php?is=plan_yaz" method="POST" style="display:flex; gap:10px;">
-                                <input type="hidden" name="danisan_id" value="<?php echo $d['id']; ?>">
-                                <input type="text" name="plan_metni" class="form-control" placeholder="Özel not veya beslenme planı yazın..." required style="margin-bottom:0; flex-grow:1; border-radius:10px;">
-                                <button type="submit" class="btn btn-success" style="border-radius:10px; padding: 10px 20px;"><i class="fas fa-paper-plane"></i></button>
-                            </form>
-                        </div>
-
-                        <div class="modal fade" id="yemekModal<?php echo $d['id']; ?>" tabindex="-1">
-                          <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content" style="border-radius: 20px; border:none;">
-                              <div class="modal-header border-0 pb-0">
-                                <h5 class="modal-title fw-bold text-success"><i class="fas fa-utensils me-2"></i> <?php echo explode(' ', $d['ad_soyad'])[0]; ?>'nin Günlüğü</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                              </div>
-                              <div class="modal-body p-4">
-                                <p class="text-muted small mb-2">Danışanın bugün sisteme girdiği yiyecekler:</p>
-                                <?php if($d['yenen_yemekler']): ?>
-                                    <div class="yemek-liste-kutu">
-                                        <?php echo $d['yenen_yemekler']; ?>
-                                    </div>
-                                    <div class="mt-3 text-end fw-bold text-success">
-                                        Toplam: <?php echo $d['bugunku_kalori']; ?> kcal
-                                    </div>
-                                <?php else: ?>
-                                    <div class="alert alert-warning text-center rounded-4 border-0 mb-0">
-                                        <i class="fas fa-exclamation-triangle mb-2" style="font-size:24px;"></i><br>
-                                        Danışan bugün henüz bir kayıt girmemiş.
-                                    </div>
-                                <?php endif; ?>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <div style="text-align: center; padding: 40px 0;">
-                        <i class="fas fa-users-slash" style="font-size: 40px; color: #cbd5e1; margin-bottom: 15px;"></i>
-                        <p style="color: var(--text-muted); margin: 0;">Henüz size atanmış bir danışan bulunmuyor.</p>
-                    </div>
-                <?php endif; ?>
-            </div>
+                <label style="font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:8px; margin-left:5px;">Tarif Detayları</label>
+                <textarea name="tarif_icerik" placeholder="Malzemeler ve hazırlanışı..." required></textarea>
+                
+                <button type="submit" class="btn-custom"><i class="fas fa-share"></i> Tarifi Yayınla</button>
+            </form>
         </div>
-    </div>
 
-    <div class="card" style="border-top: 5px solid #f59e0b; margin-top: 10px;">
-        <h3><i class="fas fa-envelope-open-text" style="color: #f59e0b;"></i> Danışanlardan Gelen Sorular (Cevap Bekleyenler)</h3>
-        
-        <?php if($gelen_sorular): ?>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px;">
-                <?php foreach($gelen_sorular as $soru): ?>
-                    <div style="background: #f8fafc; padding: 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                            <strong style="color: #1e293b;"><i class="fas fa-user-circle text-muted"></i> <?php echo htmlspecialchars($soru['danisan_adi']); ?></strong>
-                            <small style="color: #64748b;"><i class="far fa-clock"></i> <?php echo date('d.m.Y H:i', strtotime($soru['soru_tarihi'])); ?></small>
+        <div class="glass-card" style="border-top: 5px solid #3b82f6;">
+            <h3><i class="fas fa-user-friends" style="color: #3b82f6;"></i> Aktif Danışanlarım</h3>
+            
+            <?php if($danisanlar): ?>
+                <?php foreach($danisanlar as $d): ?>
+                    <div class="student-item">
+                        <div class="student-header">
+                            <div>
+                                <h4 style="margin:0 0 5px 0; font-size: 16px; font-weight:700; display:flex; align-items:center; gap:8px;">
+                                    <i class="fas fa-user-circle text-muted"></i> 
+                                    <?php echo htmlspecialchars($d['ad_soyad']); ?>
+                                    <button type="button" class="btn btn-sm btn-outline-success rounded-pill fw-bold" style="font-size:11px; padding:4px 10px;" data-bs-toggle="modal" data-bs-target="#yemekModal<?php echo $d['id']; ?>">
+                                        <i class="fas fa-search me-1"></i> Ne Yedi?
+                                    </button>
+                                </h4>
+                                <span style="font-size: 13px; color: var(--text-muted);"><i class="fas fa-envelope me-1"></i> <?php echo htmlspecialchars($d['email']); ?></span>
+                            </div>
+                            <div style="text-align: right; background:rgba(255,255,255,0.8); padding:8px 12px; border-radius:12px;">
+                                <span style="font-size: 11px; color: #64748b; display: block; font-weight:600;">Bugün Alınan</span>
+                                <strong style="color: var(--accent); font-size: 16px;"><?php echo $d['bugunku_kalori'] ?? 0; ?> kcal</strong>
+                            </div>
                         </div>
-                        <div style="color: #334155; font-size: 15px; margin-bottom: 15px; padding: 15px; background: white; border-radius: 12px; border-left: 4px solid #f59e0b;">
-                            "<?php echo nl2br(htmlspecialchars($soru['soru_metni'])); ?>"
-                        </div>
-                        <form action="islem_v2.php?is=cevapla" method="POST">
-                            <input type="hidden" name="soru_id" value="<?php echo $soru['id']; ?>">
-                            <textarea name="cevap_metni" placeholder="Cevabınızı buraya yazın..." required style="min-height: 80px; margin-bottom: 15px;"></textarea>
-                            <button type="submit" class="btn-custom" style="padding: 12px; background: #f59e0b; color: white;"><i class="fas fa-paper-plane"></i> Cevabı Gönder</button>
+                        
+                        <form action="islem_v2.php?is=plan_yaz" method="POST" style="display:flex; gap:10px;">
+                            <input type="hidden" name="danisan_id" value="<?php echo $d['id']; ?>">
+                            <input type="text" name="plan_metni" placeholder="Özel beslenme planı yazın..." required style="margin-bottom:0; flex-grow:1; border-radius:14px; padding:12px 15px;">
+                            <button type="submit" class="btn btn-success" style="border-radius:14px; padding: 0 20px; font-weight:600;"><i class="fas fa-paper-plane"></i></button>
                         </form>
                     </div>
+
+                    <div class="modal fade" id="yemekModal<?php echo $d['id']; ?>" tabindex="-1">
+                      <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                          <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title fw-bold text-success"><i class="fas fa-utensils me-2"></i> <?php echo explode(' ', $d['ad_soyad'])[0]; ?>'nin Günlüğü</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                          </div>
+                          <div class="modal-body p-4">
+                            <?php if($d['yenen_yemekler']): ?>
+                                <div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; font-size: 14px; color: #334155; line-height: 1.8;">
+                                    <?php echo $d['yenen_yemekler']; ?>
+                                </div>
+                                <div class="mt-3 text-end fw-bold text-success" style="font-size:18px;">
+                                    Toplam: <?php echo $d['bugunku_kalori']; ?> kcal
+                                </div>
+                            <?php else: ?>
+                                <div class="alert alert-warning text-center rounded-4 border-0 mb-0" style="background:#fef3c7; color:#d97706; font-weight:600;">
+                                    <i class="fas fa-exclamation-triangle mb-2" style="font-size:24px;"></i><br>
+                                    Danışan bugün henüz bir kayıt girmemiş.
+                                </div>
+                            <?php endif; ?>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                 <?php endforeach; ?>
-            </div>
-        <?php else: ?>
-            <div style="text-align: center; padding: 30px; background: #f8fafc; border-radius: 16px; border: 1px dashed #cbd5e1;">
-                <i class="fas fa-check-circle" style="font-size: 30px; color: #10b981; margin-bottom: 10px;"></i>
-                <p style="color: var(--text-muted); margin: 0;">Harika! Şu an cevap bekleyen hiçbir soru yok.</p>
-            </div>
-        <?php endif; ?>
+            <?php else: ?>
+                <div style="text-align: center; padding: 40px 0;">
+                    <i class="fas fa-users-slash" style="font-size: 40px; color: #cbd5e1; margin-bottom: 15px;"></i>
+                    <p style="color: var(--text-muted); margin: 0; font-weight:500;">Henüz size atanmış bir danışan bulunmuyor.</p>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
 
+    <div class="dashboard-grid">
+        <div class="glass-card" style="border-top: 5px solid var(--text-muted);">
+            <h3><i class="fas fa-history" style="color: var(--text-muted);"></i> Geçmiş Tariflerim</h3>
+            <?php if($tarifler): ?>
+                <div class="history-list">
+                    <?php foreach($tarifler as $t): ?>
+                        <div class="history-item">
+                            <div>
+                                <span class="history-date"><i class="far fa-calendar-alt"></i> <?php echo date('d.m.Y', strtotime($t['ekleme_tarihi'] ?? date('Y-m-d'))); ?></span>
+                                <span class="history-title"><?php echo htmlspecialchars($t['tarif_baslik']); ?></span>
+                            </div>
+                            <div class="history-stats">
+                                <span><i class="fas fa-users"></i> <?php echo $t['katilim']; ?> Kişi</span>
+                                <div style="font-size:12px; font-weight:600; color:#f59e0b;"><i class="fas fa-star"></i> <?php echo number_format($t['ort_puan'], 1); ?></div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div style="text-align: center; padding: 20px;">
+                    <i class="fas fa-clock" style="font-size: 30px; color: #cbd5e1; margin-bottom: 10px;"></i>
+                    <p class="text-muted small m-0">Henüz puanlanan bir tarifiniz bulunmuyor.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <div class="glass-card" style="border-top: 5px solid #f59e0b;">
+            <h3><i class="fas fa-question-circle" style="color: #f59e0b;"></i> Cevap Bekleyen Sorular</h3>
+            
+            <?php if($gelen_sorular): ?>
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <?php foreach($gelen_sorular as $soru): ?>
+                        <div style="background: rgba(255,255,255,0.8); padding: 20px; border-radius: 20px; border: 1px solid white;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                                <strong style="color: #1e293b; font-size:14px;"><i class="fas fa-user-circle text-muted"></i> <?php echo htmlspecialchars($soru['danisan_adi']); ?></strong>
+                                <small style="color: #64748b; font-weight:600;"><i class="far fa-clock"></i> <?php echo date('d.m.Y H:i', strtotime($soru['soru_tarihi'])); ?></small>
+                            </div>
+                            <div style="color: #334155; font-size: 13px; margin-bottom: 20px; padding: 15px; background: white; border-radius: 14px; border-left: 4px solid #f59e0b; box-shadow:0 2px 10px rgba(0,0,0,0.02);">
+                                "<?php echo nl2br(htmlspecialchars($soru['soru_metni'])); ?>"
+                            </div>
+                            <form action="islem_v2.php?is=cevapla" method="POST">
+                                <input type="hidden" name="soru_id" value="<?php echo $soru['id']; ?>">
+                                <textarea name="cevap_metni" placeholder="Danışanınıza cevabınızı yazın..." required style="min-height: 70px; border-radius:14px; margin-bottom: 10px; font-size:13px;"></textarea>
+                                <button type="submit" class="btn-custom" style="padding: 10px; background: #f59e0b; color: white;"><i class="fas fa-paper-plane"></i> Gönder</button>
+                            </form>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div style="text-align: center; padding: 30px; background: rgba(255,255,255,0.5); border-radius: 20px; border: 1px dashed #cbd5e1;">
+                    <i class="fas fa-check-circle" style="font-size: 40px; color: #10b981; margin-bottom: 15px;"></i>
+                    <h4 style="color: #1e293b; font-weight:700;">Harika!</h4>
+                    <p style="color: var(--text-muted); margin: 0; font-size:14px;">Şu an cevap bekleyen hiçbir soru yok.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+<script>
+    particlesJS("particles-js", { "particles": { "number": { "value": 30 }, "color": { "value": "#10b981" }, "opacity": { "value": 0.2 }, "size": { "value": 4 }, "line_linked": { "enable": true, "color": "#10b981", "opacity": 0.15 }, "move": { "enable": true, "speed": 1.5 } } });
+</script>
 </body>
 </html>

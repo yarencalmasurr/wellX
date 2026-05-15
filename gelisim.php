@@ -32,215 +32,155 @@ foreach($veriler as $v) {
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-   
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gelişim Analizi | Sağlık Portalı</title>
+    <title>Gelişim Analizi | WellX</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <style>
-        :root {
-            --bg: #f8fafc;
-            --accent: #0ea5e9;
-            --premium: #f59e0b;
-            --text-dark: #0f172a;
-            --text-light: #64748b;
-            --white: #ffffff;
-            --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.04), 0 10px 10px -5px rgba(0, 0, 0, 0.01);
+        :root { 
+            --blue: #3b82f6; --orange: #f59e0b; --green: #10b981; 
+            --text-main: #1e293b; --text-muted: #64748b;
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.6);
         }
-
+        
         body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: var(--bg); 
-            color: var(--text-dark); 
-            margin: 0; 
-            padding: 40px 0;
-            line-height: 1.6;
+            font-family: 'Poppins', sans-serif; margin: 0; display: flex; color: var(--text-main); 
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%);
+            background-attachment: fixed; min-height: 100vh;
         }
 
-        .container { max-width: 1200px; padding: 0 20px; }
-
-        /* Navigation */
-        .top-nav { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 40px; 
+        #particles-js { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; pointer-events: none; }
+        
+        /* Modern Sidebar (Glassmorphism) */
+        .sidebar { 
+            width: 260px; height: 100vh; padding: 30px 20px; position: fixed; z-index: 100;
+            background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border); box-shadow: 10px 0 30px rgba(0,0,0,0.03);
+            display: flex; flex-direction: column;
         }
-        .top-nav h2 { font-size: 28px; font-weight: 700; margin: 0; letter-spacing: -0.8px; }
-        .back-btn { 
-            background: var(--white);
-            color: var(--text-light); 
-            text-decoration: none; 
-            font-weight: 600; 
-            font-size: 14px; 
-            padding: 10px 20px;
-            border-radius: 14px;
-            border: 1px solid #e2e8f0;
-            transition: 0.3s all;
-        }
-        .back-btn:hover { background: #f1f5f9; color: var(--accent); transform: translateX(-5px); }
+        
+        .sidebar h2 { font-size: 28px; font-weight: 800; color: #111827; margin-bottom: 10px; letter-spacing: -1px; display: flex; align-items: center; gap: 10px;}
+        .sidebar h2 i { color: #ef4444; filter: drop-shadow(0 0 8px rgba(239,68,68,0.4)); }
 
-        /* Dashboard Grid */
-        .top-grid { 
-            display: grid; 
-            grid-template-columns: 1.2fr 1.2fr 0.8fr; 
-            gap: 25px; 
-            margin-bottom: 30px; 
-        }
+        .menu-item { display: flex; align-items: center; padding: 14px 18px; color: var(--text-muted); text-decoration: none; border-radius: 16px; margin-bottom: 8px; transition: all 0.3s ease; font-weight: 500; border: 1px solid transparent; }
+        .menu-item i { transition: 0.3s; width: 25px; }
+        .menu-item:hover { background: rgba(255, 255, 255, 0.9); color: var(--blue); transform: translateX(5px); border-color: rgba(255,255,255,0.8); box-shadow: 0 4px 15px rgba(59,130,246,0.05); }
+        .menu-item.active { background: linear-gradient(135deg, #dbeafe, #eff6ff); color: var(--blue); font-weight: 700; box-shadow: 0 8px 20px rgba(59,130,246,0.1); border-color: white; }
 
-        .card { 
-            background: var(--white); 
-            padding: 28px; 
-            border-radius: 30px; 
-            box-shadow: var(--card-shadow); 
-            border: 1px solid rgba(226, 232, 240, 0.7);
-            height: 100%;
+        .menu-item:nth-of-type(1) i { color: #3b82f6; }
+        .menu-item:nth-of-type(2) i { color: #10b981; }
+        .menu-item:nth-of-type(3) i { color: #8b5cf6; }
+        .menu-item:nth-of-type(4) i { color: #f59e0b; }
+        .menu-item:nth-of-type(5) i { color: #06b6d4; }
+        .menu-item:nth-of-type(6) i { color: #ec4899; }
+        .menu-item:nth-of-type(7) i { color: #f97316; }
+        .menu-item:nth-of-type(8) i { color: #6366f1; }
+        
+        .sidebar .logout-btn { margin-top: auto !important; background: rgba(254, 226, 226, 0.6); color: #ef4444 !important; font-weight: 600; }
+        .sidebar .logout-btn:hover { background: #fee2e2; color: #dc2626 !important; transform: translateX(0); }
+
+        .main { margin-left: 260px; padding: 40px 50px; width: calc(100% - 260px); position: relative; z-index: 10; box-sizing: border-box;}
+        
+        .page-header { display: flex; align-items: center; gap: 15px; margin-bottom: 40px; }
+        .header-icon { background: linear-gradient(135deg, #0ea5e9, #0284c7); width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; box-shadow: 0 8px 20px rgba(14,165,233,0.3);}
+        .page-header h1 { font-size: 32px; font-weight: 800; margin: 0; letter-spacing: -1px; color: #0f172a;}
+
+        /* Glass Cards */
+        .glass-card {
+            background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-radius: 24px; border: 1px solid var(--glass-border);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.03); padding: 30px; margin-bottom: 30px;
             transition: 0.3s ease;
         }
-
-        .card h4 { 
-            margin-top: 0; 
-            margin-bottom: 20px; 
-            font-size: 13px; 
-            font-weight: 800; 
-            color: var(--text-light);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
+        .glass-card h4 { margin-top: 0; margin-bottom: 20px; font-size: 15px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+        
+        .top-grid { display: grid; grid-template-columns: 1.2fr 1.2fr 0.8fr; gap: 25px; margin-bottom: 30px; }
         .chart-box { height: 240px; width: 100%; position: relative; }
 
-        /* Fotoğraf Alanı & Galeri */
-        .btn-upload-trigger { 
-            background: var(--text-dark); 
-            color: var(--white); 
-            border: none; 
-            padding: 14px; 
-            border-radius: 16px; 
-            font-weight: 700; 
-            width: 100%; 
-            transition: 0.3s; 
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        .btn-upload-trigger:hover { background: var(--accent); transform: scale(1.02); }
+        /* Fotoğraf Alanı */
+        .btn-upload-trigger { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border: none; padding: 14px; border-radius: 16px; font-weight: 600; width: 100%; transition: 0.3s; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);}
+        .btn-upload-trigger:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0,0,0,0.2); }
 
-        .foto-galeri { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); 
-            gap: 12px; 
-            margin-top: 25px; 
-            max-height: 280px; 
-            overflow-y: auto; 
-            padding-right: 5px;
-        }
+        .foto-galeri { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; margin-top: 20px; max-height: 250px; overflow-y: auto; padding-right: 5px; }
+        .foto-item { position: relative; border-radius: 14px; overflow: hidden; border: 2px solid white; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .foto-item:hover { transform: scale(1.05); z-index: 5; }
+        .foto-item img { width: 100%; height: 100px; object-fit: cover; display: block; }
+        .foto-tarih { position: absolute; bottom: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); color: white; width: 100%; font-size: 10px; padding: 5px 0; text-align: center; font-weight: 600; }
 
-        .foto-item { 
-            position: relative; 
-            border-radius: 18px; 
-            overflow: hidden; 
-            border: 2px solid #f1f5f9; 
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-        }
-        .foto-item:hover { transform: scale(1.05); z-index: 5; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        .foto-item img { width: 100%; height: 110px; object-fit: cover; display: block; cursor: zoom-in; }
-        
-        .foto-tarih { 
-            position: absolute; 
-            bottom: 0; 
-            background: rgba(15, 23, 42, 0.8); 
-            backdrop-filter: blur(4px);
-            color: white; 
-            width: 100%; 
-            font-size: 10px; 
-            padding: 6px 0; 
-            text-align: center; 
-            font-weight: 600;
-        }
-
-        .delete-btn { 
-            position: absolute; 
-            top: 8px; 
-            right: 8px; 
-            background: #ef4444; 
-            color: white; 
-            width: 24px; 
-            height: 24px; 
-            border-radius: 50%; 
-            display: none; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 11px; 
-            text-decoration: none; 
-            z-index: 10;
-            border: 2px solid white;
-        }
+        .delete-btn { position: absolute; top: 5px; right: 5px; background: #ef4444; color: white; width: 22px; height: 22px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 10px; text-decoration: none; z-index: 10; border: 2px solid white; }
         .foto-item:hover .delete-btn { display: flex; }
 
-        /* Premium Lock Design */
-        .premium-lock { 
-            background: linear-gradient(135deg, #fffcf5 0%, #fffbeb 100%); 
-            border: 2px dashed #fcd34d; 
-            padding: 30px 20px; 
-            border-radius: 24px; 
-            text-align: center; 
-            height: 100%; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center;
-        }
+        /* Premium Lock */
+        .premium-lock { background: rgba(254, 243, 199, 0.8); border: 2px dashed #fcd34d; padding: 25px 20px; border-radius: 20px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; }
 
-        /* Data Table */
-        .table-card { padding: 0; overflow: hidden; border-radius: 30px; }
-        .table-header { padding: 28px 28px 10px 28px; }
+        /* Tablo */
         .table-wrapper { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th { text-align: left; background: #fafcfe; padding: 20px; font-size: 12px; font-weight: 800; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #f1f5f9; }
-        td { padding: 20px; border-bottom: 1px solid #f1f5f9; font-size: 15px; font-weight: 500; }
-        .weight-cell { font-weight: 700; color: var(--accent); background: #f0f9ff; padding: 6px 12px; border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px; font-size: 13px; font-weight: 700; color: var(--text-muted); border-bottom: 2px solid rgba(0,0,0,0.05); text-transform: uppercase; }
+        td { padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 14px; font-weight: 500; }
+        .weight-cell { font-weight: 700; color: var(--blue); background: rgba(59,130,246,0.1); padding: 6px 12px; border-radius: 10px; }
 
-        /* Modal Design */
-        .modal-content { border-radius: 35px; border: none; overflow: hidden; }
-        .modal-header { background: #f8fafc; padding: 30px; }
-        .modal-body { padding: 40px; }
-        .upload-area { border: 2px dashed #e2e8f0; border-radius: 20px; padding: 30px; text-align: center; transition: 0.3s; }
-        .upload-area:hover { border-color: var(--accent); background: #f0f9ff; }
-
-        @media (max-width: 1100px) { .top-grid { grid-template-columns: 1fr; } }
+        .modal-content { border-radius: 24px; border: none; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); box-shadow: 0 25px 50px rgba(0,0,0,0.1);}
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="top-nav">
-        <h2><i class="fas fa-chart-pie" style="color: var(--accent); margin-right: 12px;"></i>Gelişim Analizi</h2>
-        <a href="panel.php" class="back-btn"><i class="fas fa-arrow-left me-2"></i>Panele Dön</a>
+<div id="particles-js"></div>
+
+<div class="sidebar">
+    <h2><i class="fas fa-heartbeat"></i> wellX </h2>
+    
+    <?php if ($is_premium): ?>
+        <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); padding: 8px 14px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(245,158,11,0.15); color: #d97706; font-size: 12px; font-weight: bold; margin-bottom: 20px;">
+            <i class="fas fa-crown"></i> PREMIUM
+        </div>
+    <?php endif; ?>
+    
+    <?php 
+        $current_page = basename($_SERVER['PHP_SELF']); 
+        if(!function_exists('isActive')){
+            function isActive($page, $current) { return ($page == $current) ? 'active' : ''; }
+        }
+    ?>
+
+    <nav style="flex-grow: 1;">
+        <a href="panel.php" class="menu-item <?php echo isActive('panel.php', $current_page); ?>"><i class="fas fa-home"></i> Özet Paneli</a>
+        <a href="beslenme.php" class="menu-item <?php echo isActive('beslenme.php', $current_page); ?>"><i class="fas fa-apple-alt"></i> Beslenme</a>
+        <a href="egzersiz.php" class="menu-item <?php echo isActive('egzersiz.php', $current_page); ?>"><i class="fas fa-dumbbell"></i> Egzersiz</a>
+        <a href="sorularim.php" class="menu-item <?php echo isActive('sorularim.php', $current_page); ?>"><i class="fas fa-envelope-open-text"></i> Uzmana Sorular</a>
+        <a href="gelisim.php" class="menu-item <?php echo isActive('gelisim.php', $current_page); ?>"><i class="fas fa-chart-line"></i> Gelişim</a>
+        <a href="rozetlerim.php" class="menu-item <?php echo isActive('rozetlerim.php', $current_page); ?>"><i class="fas fa-medal"></i> Rozetlerim</a>
+        <a href="turnuva.php" class="menu-item <?php echo isActive('turnuva.php', $current_page); ?>"><i class="fas fa-trophy"></i> Turnuva</a>
+        <a href="profil.php" class="menu-item <?php echo isActive('profil.php', $current_page); ?>"><i class="fas fa-user"></i> Profil</a>
+    </nav>
+    <a href="cikis.php" class="menu-item logout-btn"><i class="fas fa-sign-out-alt"></i> Çıkış Yap</a>
+</div>
+
+<div class="main">
+    <div class="page-header">
+        <div class="header-icon"><i class="fas fa-chart-pie"></i></div>
+        <h1>Gelişim Analizi</h1>
     </div>
 
     <div class="top-grid">
-        <div class="card">
+        <div class="glass-card">
             <h4><i class="fas fa-weight-scale" style="color: #6366f1;"></i> Kilo Değişim Grafiği</h4>
             <div class="chart-box"><canvas id="weightChart"></canvas></div>
         </div>
 
-        <div class="card">
-            <h4><i class="fas fa-droplets" style="color: #0ea5e9;"></i> Su Tüketim Analizi</h4>
+        <div class="glass-card">
+            <h4><i class="fas fa-droplets" style="color: #0ea5e9;"></i> Su Tüketimi</h4>
             <div class="chart-box"><canvas id="waterChart"></canvas></div>
         </div>
 
-        <div class="card">
-            <h4><i class="fas fa-camera-retro" style="color: var(--premium);"></i> Görsel Gelişim</h4>
+        <div class="glass-card">
+            <h4><i class="fas fa-camera-retro" style="color: var(--orange);"></i> Görsel Gelişim</h4>
             <?php if ($is_premium == 1): ?>
                 <button class="btn-upload-trigger" data-bs-toggle="modal" data-bs-target="#fotoYukleModal">
                     <i class="fas fa-plus"></i> Yeni Form Ekle
@@ -258,26 +198,22 @@ foreach($veriler as $v) {
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <div class="text-center mt-4">
-                            <p style="font-size: 13px; color: var(--text-light); font-style: italic;">Henüz fotoğraf yüklemediniz.</p>
-                        </div>
+                        <div class="text-center mt-4 text-muted small">Henüz fotoğraf yüklemediniz.</div>
                     <?php endif; ?>
                 </div>
             <?php else: ?>
                 <div class="premium-lock">
-                    <i class="fas fa-crown mb-3" style="font-size: 32px; color: var(--premium);"></i>
-                    <h5 style="font-weight: 700; font-size: 16px;">Premium Özellik</h5>
-                    <p style="font-size: 12px; color: #b45309;">Form fotoğraflarınızı yükleyerek değişiminizi kanıtlayın.</p>
-                    <a href="premium_planlar.php" class="btn btn-warning btn-sm fw-bold mt-2" style="border-radius: 10px;">Yükselt</a>
+                    <i class="fas fa-crown mb-2" style="font-size: 32px; color: var(--orange);"></i>
+                    <h5 style="font-weight: 700; font-size: 15px; color:#854d0e;">Premium Özellik</h5>
+                    <p style="font-size: 12px; color: #b45309; margin-bottom:10px;">Form fotoğraflarınızı yükleyerek değişiminizi kaydedin.</p>
+                    <a href="premium_planlar.php" class="btn btn-warning btn-sm fw-bold" style="border-radius: 10px;">Yükselt</a>
                 </div>
             <?php endif; ?>
         </div>
     </div>
 
-    <div class="card table-card">
-        <div class="table-header">
-            <h4><i class="fas fa-table-list"></i> Son 10 Günlük Detaylı Veriler</h4>
-        </div>
+    <div class="glass-card">
+        <h4><i class="fas fa-table-list" style="color:var(--text-muted);"></i> Son 10 Günlük Detaylı Veriler</h4>
         <div class="table-wrapper">
             <table>
                 <thead>
@@ -292,7 +228,7 @@ foreach($veriler as $v) {
                 <tbody>
                     <?php foreach(array_reverse($veriler) as $row): ?>
                     <tr>
-                        <td style="color: var(--text-light);"><?php echo date('d.m.Y', strtotime($row['kayit_tarihi'])); ?></td>
+                        <td style="color: var(--text-muted);"><i class="far fa-calendar-alt me-2"></i><?php echo date('d.m.Y', strtotime($row['kayit_tarihi'])); ?></td>
                         <td><span class="weight-cell"><?php echo $row['guncel_kilo']; ?> kg</span></td>
                         <td><i class="fas fa-droplet me-2" style="color: #38bdf8;"></i><?php echo $row['su_miktari']; ?> L</td>
                         <td><i class="fas fa-bed me-2" style="color: #818cf8;"></i><?php echo $row['uyku_suresi']; ?> S</td>
@@ -305,21 +241,21 @@ foreach($veriler as $v) {
     </div>
 </div>
 
-<div class="modal fade" id="fotoYukleModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="fotoYukleModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content shadow-lg">
-      <div class="modal-header border-0">
-        <h5 class="fw-bold m-0">Yeni Form Fotoğrafı Ekle</h5>
+    <div class="modal-content p-2">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="fw-bold m-0 text-primary">Yeni Form Fotoğrafı Ekle</h5>
         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body p-4">
         <form action="islem_v2.php?is=foto_yukle" method="POST" enctype="multipart/form-data">
-            <div class="upload-area mb-4">
-                <i class="fas fa-images fs-1 text-primary opacity-50 mb-3"></i>
-                <input type="file" name="form_foto" class="form-control border-0 bg-light p-3" required style="border-radius: 15px;">
-                <div class="mt-3 text-muted small">JPG, PNG veya WebP dosyaları kabul edilir.</div>
+            <div style="border: 2px dashed #cbd5e1; border-radius: 20px; padding: 30px; text-align: center; margin-bottom: 20px;">
+                <i class="fas fa-cloud-upload-alt fs-1 text-primary opacity-50 mb-3"></i>
+                <input type="file" name="form_foto" class="form-control bg-light" required style="border-radius: 12px;">
+                <div class="mt-2 text-muted" style="font-size: 11px;">JPG, PNG veya WebP dosyaları kabul edilir.</div>
             </div>
-            <button type="submit" class="btn btn-primary w-100 p-3 fw-bold" style="border-radius: 18px; font-size: 16px;">
+            <button type="submit" class="btn btn-primary w-100 p-3 fw-bold" style="border-radius: 16px; font-size: 15px;">
                 <i class="fas fa-check-circle me-2"></i>Gelişimi Kaydet
             </button>
         </form>
@@ -333,45 +269,41 @@ const commonOptions = {
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false } },
     scales: { 
-        x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' } } },
-        y: { grid: { color: '#f1f5f9' }, border: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } } } 
+        x: { grid: { display: false }, ticks: { font: { family: 'Poppins', size: 11, weight: '600' } } },
+        y: { grid: { color: 'rgba(0,0,0,0.05)' }, border: { display: false }, ticks: { font: { family: 'Poppins', size: 11 } } } 
     }
 };
 
-// Kilo Chart
 new Chart(document.getElementById('weightChart'), {
     type: 'line',
     data: {
         labels: <?php echo json_encode($tarihler); ?>,
         datasets: [{
             data: <?php echo json_encode($kilolar); ?>,
-            borderColor: '#0f172a',
-            borderWidth: 3,
-            tension: 0.4,
-            pointRadius: 4,
-            pointBackgroundColor: '#fff',
-            pointBorderWidth: 2,
-            fill: false
+            borderColor: '#0f172a', borderWidth: 3, tension: 0.4,
+            pointRadius: 4, pointBackgroundColor: '#fff', pointBorderWidth: 2, fill: false
         }]
     },
     options: commonOptions
 });
 
-// Water Chart
 new Chart(document.getElementById('waterChart'), {
     type: 'bar',
     data: {
         labels: <?php echo json_encode($tarihler); ?>,
         datasets: [{
             data: <?php echo json_encode($sular); ?>,
-            backgroundColor: '#0ea5e9',
-            borderRadius: 10,
-            barThickness: 18
+            backgroundColor: '#0ea5e9', borderRadius: 10, barThickness: 18
         }]
     },
     options: commonOptions
 });
 </script>
-
+<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+<script>
+    particlesJS("particles-js", {
+        "particles": { "number": { "value": 40 }, "color": { "value": "#3b82f6" }, "opacity": { "value": 0.2 }, "size": { "value": 4 }, "line_linked": { "enable": true, "color": "#3b82f6", "opacity": 0.15 }, "move": { "enable": true, "speed": 1.5 } }
+    });
+</script>
 </body>
 </html>
