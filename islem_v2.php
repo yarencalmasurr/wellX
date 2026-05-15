@@ -114,16 +114,36 @@ try {
         }
 
         // Rozet Kontrolü (Hata Giderildi: Uyku da eklendi ve toplam değerler kullanıldı)
-        if(file_exists('rozet_fonksiyonu.php')) {
-            include 'rozet_fonksiyonu.php';
-            rozetKontrolEt($conn, $user_id, 'su', $toplam_su_kontrol);
-            rozetKontrolEt($conn, $user_id, 'spor', $toplam_spor_kontrol);
-            rozetKontrolEt($conn, $user_id, 'uyku', $toplam_uyku_kontrol);
-        }
+        // Rozet Kontrolü
+$yeni_rozet = "";
 
-        header("Location: panel.php?islem=basarili");
-        exit();
+if(file_exists('rozet_fonksiyonu.php')) {
+
+    include 'rozet_fonksiyonu.php';
+
+    $rozet1 = rozetKontrolEt($conn, $user_id, 'su', $toplam_su_kontrol);
+    $rozet2 = rozetKontrolEt($conn, $user_id, 'spor', $toplam_spor_kontrol);
+    $rozet3 = rozetKontrolEt($conn, $user_id, 'uyku', $toplam_uyku_kontrol);
+
+    if(!empty($rozet1)) {
+        $yeni_rozet = $rozet1;
     }
+    elseif(!empty($rozet2)) {
+        $yeni_rozet = $rozet2;
+    }
+    elseif(!empty($rozet3)) {
+        $yeni_rozet = $rozet3;
+    }
+}
+
+if(!empty($yeni_rozet)) {
+    header("Location: panel.php?yeni_rozet=" . urlencode($yeni_rozet));
+} else {
+    header("Location: panel.php?islem=basarili");
+}
+
+exit();
+}
 
     // --- 5. UZMAN ATAMA (DANIŞANIN UZMAN SEÇMESİ) ---
     elseif ($is == 'uzman_atama') {

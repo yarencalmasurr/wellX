@@ -193,6 +193,7 @@ $mevcut_kayit = $kontrol->fetch();
     </style>
 </head>
 <body>
+    
 
 <div class="sidebar">
     <h2><i class="fas fa-heartbeat"></i> Sağlık Takibim</h2>
@@ -225,7 +226,11 @@ $mevcut_kayit = $kontrol->fetch();
     <a href="turnuva.php" class="menu-item <?php echo isActive('turnuva.php', $current_page); ?>"><i class="fas fa-trophy" style="width:25px;"></i> Turnuva</a>
     <a href="profil.php" class="menu-item <?php echo isActive('profil.php', $current_page); ?>"><i class="fas fa-user" style="width:25px;"></i> Profil</a>
     
-    <a href="cikis.php" class="menu-item" style="color:#ef4444; margin-top: 40px;"><i class="fas fa-sign-out-alt" style="width:25px;"></i> Çıkış Yap</a>
+    
+    <a href="cikis.php" class="menu-item mt-2" style="color: #ef4444; font-weight: 500;">
+        <i class="fas fa-sign-out-alt me-2"></i> Çıkış Yap
+    </a>
+
 </div>
 
 <div class="main">
@@ -580,3 +585,5 @@ function hesaplaSpor() {
 
 </body>
 </html>
+
+
