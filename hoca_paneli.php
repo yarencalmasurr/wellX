@@ -12,7 +12,7 @@ $bugun = date('Y-m-d');
 $son_duyuru = null;
 
 try {
-    // 1. danışanları çek ve bugünkü spor günlüğünü getir
+    // 1. Danışanları Çek ve Bugünkü Spor Günlüğünü Getir
     $sorgu = $conn->prepare("
         SELECT k.id, k.ad_soyad, k.email,
         (SELECT SUM(spor_suresi) FROM aktivite_kayitlari WHERE user_id = k.id AND kayit_tarihi = ?) as bugunku_spor,
@@ -26,7 +26,7 @@ try {
     $sorgu->execute([$bugun, $bugun, $hoca_id]);
     $danisanlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2. bekleyen soruları çek
+    // 2. Bekleyen Soruları Çek
     $soru_sorgu = $conn->prepare("
         SELECT us.*, k.ad_soyad as danisan_adi 
         FROM uzman_sorulari us 
@@ -37,7 +37,7 @@ try {
     $soru_sorgu->execute([$hoca_id]);
     $gelen_sorular = $soru_sorgu->fetchAll(PDO::FETCH_ASSOC);
 
-    // 3. geçmiş duyuruları çek (son 5 duyuru)
+    // 3. Geçmiş Duyuruları Çek (Son 5 Duyuru)
     $duyuru_sorgu = $conn->prepare("SELECT * FROM gunun_antrenmani WHERE hoca_id = ? ORDER BY id DESC LIMIT 5");
     $duyuru_sorgu->execute([$hoca_id]);
     $gecmis_duyurular = $duyuru_sorgu->fetchAll(PDO::FETCH_ASSOC);
@@ -84,7 +84,6 @@ try {
 
         .glass-card { background: var(--glass-bg); backdrop-filter: blur(15px); border-radius: 24px; border: 1px solid var(--glass-border); box-shadow: 0 15px 35px rgba(0,0,0,0.03); padding: 30px; transition: 0.3s ease; }
         .glass-card h3 { margin-top: 0; margin-bottom: 20px; font-size: 18px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 10px; }
-        
         
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; align-items: start; }
         
@@ -149,8 +148,9 @@ try {
         </div>
 
         <div class="glass-card" style="border-top: 5px solid #10b981;">
-            <h3><i class="fas fa-users" style="color: #10b981;"></i> Size Bağlı Sporcular</h3>
+            <h3><i class="fas fa-users" style="color: #10b981;"></i> Size Bağlı Danışanlar</h3>
             
+            <?php $modallar_hoca = ''; ?>
             <?php if($danisanlar): ?>
                 <?php foreach($danisanlar as $d): ?>
                     <div class="student-item">
@@ -181,6 +181,7 @@ try {
                         </form>
                     </div>
 
+                    <?php ob_start(); ?>
                     <div class="modal fade" id="sporModal<?php echo $d['id']; ?>" tabindex="-1">
                       <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
@@ -199,13 +200,15 @@ try {
                             <?php else: ?>
                                 <div class="alert alert-warning text-center rounded-4 border-0 mb-0" style="background:#fef3c7; color:#d97706; font-weight:600;">
                                     <i class="fas fa-bed mb-2" style="font-size:24px;"></i><br>
-                                    Sporcu bugün henüz bir egzersiz girmemiş.
+                                    Danışan bugün henüz bir egzersiz girmemiş.
                                 </div>
                             <?php endif; ?>
                           </div>
                         </div>
                       </div>
                     </div>
+                    <?php $modallar_hoca .= ob_get_clean(); ?>
+
                 <?php endforeach; ?>
             <?php else: ?>
                 <div style="text-align: center; padding: 40px 0;">
@@ -271,6 +274,8 @@ try {
         </div>
     </div>
 </div>
+
+<?php echo isset($modallar_hoca) ? $modallar_hoca : ''; ?>
 
 <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
 <script>
