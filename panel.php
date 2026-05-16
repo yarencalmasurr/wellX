@@ -467,21 +467,21 @@ $mevcut_kayit = $kontrol->fetch();
                     <label class="input-label">İçilen Su (Litre)</label>
                     <div class="input-icon-wrapper">
                         <i class="fas fa-tint" style="color: #0ea5e9;"></i>
-                        <input type="number" step="0.1" name="su_miktari" placeholder="Örn: 2.5" required class="form-control">
+                        <input type="number" step="0.1" name="su_miktari" placeholder="Örn: 2.5" class="form-control">
                     </div>
                 </div>
                 <div>
                     <label class="input-label">Uyku (Saat)</label>
                     <div class="input-icon-wrapper">
                         <i class="fas fa-moon" style="color: #8b5cf6;"></i>
-                        <input type="number" step="0.1" name="uyku_suresi" placeholder="Örn: 7.5" required class="form-control">
+                        <input type="number" step="0.1" name="uyku_suresi" placeholder="Örn: 7.5" class="form-control">
                     </div>
                 </div>
                 <div>
                     <label class="input-label">Güncel Kilo (kg)</label>
                     <div class="input-icon-wrapper">
                         <i class="fas fa-weight" style="color: #ec4899;"></i>
-                        <input type="number" step="0.1" name="guncel_kilo" placeholder="Örn: 65.5" value="<?php echo $son_kilo; ?>" required class="form-control">
+                        <input type="number" step="0.1" name="guncel_kilo" placeholder="Örn: 65.5" value="<?php echo $son_kilo; ?>" class="form-control">
                     </div>
                 </div>
             </div>
