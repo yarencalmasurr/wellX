@@ -2,11 +2,11 @@
 session_start();
 include 'baglan.php';
 
-// Kullanıcı ID'sini alalım
+// kullanıcı id alalım
 $user_id = $_SESSION['user_id'];
 
 // 1. Veritabanında kullanıcıyı premium yapalım
-// Not: 'kullanicilar' tablonuzda 'is_premium' sütunu olduğunu varsayıyorum (yoksa eklemelisiniz)
+
 $guncelle = $conn->prepare("UPDATE kullanicilar SET is_premium = 1 WHERE id = ?");
 $sonuc = $guncelle->execute([$user_id]);
 

@@ -21,16 +21,16 @@
             font-family: 'Poppins', sans-serif;
             overflow: hidden;
             display: flex; align-items: center; justify-content: center;
-            /* Ferah Mavi Arka Plan */
+            /* mavi arkaplan */
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%);
         }
 
-        /* Particles Arka Plan Alanı */
+        /* particles arkaplan */
         #particles-js {
             position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 1;
         }
 
-        /* Modern Cam Efektli Kart */
+        /* cam efekt görünümlü kart */
         .login-box {
             position: relative; z-index: 10;
             width: 100%; max-width: 420px;
@@ -177,7 +177,7 @@
         "retina_detect": true
     });
 
-    // Hafif Tilt (Eğilme) Efekti
+    // eğilme efekti
     const card = document.getElementById('loginCard');
     document.addEventListener('mousemove', (e) => {
         const xAxis = (window.innerWidth / 2 - e.pageX) / 40;

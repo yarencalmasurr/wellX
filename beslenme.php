@@ -2,7 +2,7 @@
 session_start();
 include 'baglan.php';
 
-// Oturum kontrolü
+// oturum kontrolü
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit();
@@ -10,19 +10,19 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// --- KULLANICI BİLGİLERİNİ ÇEK (Sidebar için eklendi) ---
+// kullanıcı bilgilerini çek
 $user_sorgu = $conn->prepare("SELECT * FROM kullanicilar WHERE id = ?");
 $user_sorgu->execute([$user_id]);
 $user_data = $user_sorgu->fetch(PDO::FETCH_ASSOC);
 $is_premium = $user_data['is_premium'] ?? 0;
 
-// --- BİLDİRİMİ OKUNDU YAP (SAYFAYA GİRİNCE BİLDİRİM SİLİNİR) ---
+// bildirimi okundu yap yani sayfaya girince bildirim silinir
 try {
     $update = $conn->prepare("UPDATE beslenme_planlari SET okundu = 1 WHERE user_id = ? AND DATE(kayit_tarihi) = CURDATE()");
     $update->execute([$user_id]);
 } catch (PDOException $e) {}
 
-// BUGÜNÜN PLANLARINI ÇEK
+// bugünün planlarını çek
 $sorgu = $conn->prepare("SELECT bp.*, k.ad_soyad as diyetisyen_adi 
                          FROM beslenme_planlari bp 
                          LEFT JOIN kullanicilar k ON bp.diyetisyen_id = k.id 
@@ -58,7 +58,7 @@ $planlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
 
         #particles-js { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; pointer-events: none; }
         
-        /* Modern Sidebar */
+        /* sidebar tasarımı  */
         .sidebar { 
             width: 260px; height: 100vh; padding: 30px 20px; position: fixed; z-index: 100;
             background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -86,14 +86,14 @@ $planlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
         .sidebar .logout-btn { margin-top: auto !important; background: rgba(254, 226, 226, 0.6); color: #ef4444 !important; font-weight: 600; }
         .sidebar .logout-btn:hover { background: #fee2e2; color: #dc2626 !important; transform: translateX(0); }
 
-        /* Main Content */
+        /* ana içerik */
         .content { margin-left: 260px; padding: 40px 50px; width: calc(100% - 260px); position: relative; z-index: 10; box-sizing: border-box;}
         
         .page-header { display: flex; align-items: center; gap: 15px; margin-bottom: 40px; }
         .header-icon { background: linear-gradient(135deg, #10b981, #059669); width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; box-shadow: 0 8px 20px rgba(16,185,129,0.3);}
         .page-header h1 { font-size: 32px; font-weight: 800; margin: 0; letter-spacing: -1px; color: #0f172a;}
 
-        /* Glass Cards */
+        /* cam görünüm */
         .glass-card {
             background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-radius: 24px; border: 1px solid var(--glass-border);
@@ -116,6 +116,7 @@ $planlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
     </style>
 </head>
 <body>
+ <!-- beslenme planlarının listelendiği kullanıcı arayüzü ve sidebar sistemi -->
 
 <div id="particles-js"></div>
 
@@ -175,7 +176,8 @@ $planlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
         </div>
     <?php endif; ?>
 </div>
-
+<!-- arkaplan animasyon efekti -->
+<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
 <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
 <script>
     particlesJS("particles-js", {

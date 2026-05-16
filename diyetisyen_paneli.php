@@ -2,7 +2,7 @@
 session_start();
 include 'baglan.php';
 
-// Güvenlik Kontrolü
+// güvenlik kontrolü
 if (!isset($_SESSION['user_id']) || $_SESSION['rol'] != 'diyetisyen') {
     header("Location: index.php");
     exit();
@@ -12,7 +12,7 @@ $diyetisyen_id = $_SESSION['user_id'];
 $bugun = date('Y-m-d');
 
 try {
-    // 1. Aktif Danışanları ve Bugün Yedikleri Yemekleri Çek
+    // aktif danışanlar ve bugün yedikleri yemekler
     $sorgu = $conn->prepare("
         SELECT k.id, k.ad_soyad, k.email, 
         (SELECT SUM(alinan_kalori) FROM aktivite_kayitlari WHERE user_id = k.id AND kayit_tarihi = ?) as bugunku_kalori,
@@ -27,7 +27,7 @@ try {
     $sorgu->execute([$bugun, $bugun, $diyetisyen_id]);
     $danisanlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
     
-    // 2. Geçmiş Tarif İstatistiklerini Çek (Son 5 Tarif)
+    // Geçmiş tarif istatistikleri(son 5 tarif)
     $istatistik_sorgu = $conn->prepare("
         SELECT t.tarif_baslik, t.ekleme_tarihi, 
                COALESCE(AVG(p.puan), 0) as ort_puan, 
@@ -41,7 +41,7 @@ try {
     $istatistik_sorgu->execute([$diyetisyen_id]);
     $tarifler = $istatistik_sorgu->fetchAll(PDO::FETCH_ASSOC);
 
-    // 3. Gelen Soruları Çek
+    // 3. gelen soruları çek
     $soru_sorgu = $conn->prepare("
         SELECT us.*, k.ad_soyad as danisan_adi 
         FROM uzman_sorulari us 
@@ -95,7 +95,7 @@ try {
         .glass-card { background: var(--glass-bg); backdrop-filter: blur(15px); border-radius: 24px; border: 1px solid var(--glass-border); box-shadow: 0 15px 35px rgba(0,0,0,0.03); padding: 30px; transition: 0.3s ease; }
         .glass-card h3 { margin-top: 0; margin-bottom: 20px; font-size: 18px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 10px; }
         
-        /* Grid Güncellemesi */
+        /* grid güncellemesi */
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; align-items: start; }
         
         input[type="text"], textarea { width: 100%; padding: 15px 18px; border-radius: 16px; border: 1px solid #e2e8f0; background: rgba(255,255,255,0.9); margin-bottom: 20px; font-family: inherit; font-size: 14px; transition: 0.3s; }
@@ -103,7 +103,7 @@ try {
         .btn-custom { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); color: white; border: none; padding: 15px 24px; border-radius: 16px; cursor: pointer; font-weight: 600; font-size: 15px; width: 100%; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 20px rgba(16,185,129,0.2);}
         .btn-custom:hover { transform: translateY(-2px); box-shadow: 0 15px 25px rgba(16,185,129,0.3); color:white;}
         
-        /* Geçmiş Liste Tasarımı */
+        /* geçmiş liste tasarımı */
         .history-list { display: flex; flex-direction: column; gap: 15px; }
         .history-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.8); padding: 15px 20px; border-radius: 16px; border: 1px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.02); transition: 0.2s;}
         .history-item:hover { background: white; transform: translateX(5px); }

@@ -2,7 +2,7 @@
 session_start();
 include 'baglan.php';
 
-// Güvenlik Kontrolü
+// güvenlik Kontrolü
 if (!isset($_SESSION['user_id']) || ($_SESSION['rol'] != 'danışan' && $_SESSION['rol'] != 'danisan')) {
     header("Location: index.php"); 
     exit();
@@ -11,12 +11,12 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['rol'] != 'danışan' && $_SESSIO
 $user_id = $_SESSION['user_id'];
 $tarih = date('Y-m-d');
 
-// Mevcut verileri çek
+// mevcut verileri çek
 $k = $conn->prepare("SELECT * FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
 $k->execute([$user_id, $tarih]);
 $veri = $k->fetch();
 
-// Eğer bugün kayıt yoksa güncelleme yapamaz
+// eğer bugün kayıt yoksa güncelleme yapamaz
 if (!$veri) {
     header("Location: panel.php");
     exit();

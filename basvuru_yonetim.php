@@ -2,19 +2,19 @@
 session_start();
 include 'baglan.php';
 
-// Güvenlik: Sadece Admin girebilir
+// kullanıcının giriş yapıp yapmadığı ve admin yetkisine sahip olup olmadığı kontrol ediliyor
 if (!isset($_SESSION['user_id']) || $_SESSION['rol'] != 'admin') {
     header("Location: index.php");
     exit();
 }
 
 try {
-    // 1. Bekleyen Başvuruları Çek
+    // bekleyen uzman başvuruları listeleniyor
     $bekleyen_sorgu = $conn->prepare("SELECT * FROM uzman_basvurulari WHERE durum = 'beklemede' ORDER BY id DESC");
     $bekleyen_sorgu->execute();
     $bekleyenler = $bekleyen_sorgu->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2. İstatistikler için verileri çek
+    // onaylanan ya da reddedilen başvuru sayıları
     $istatistik = $conn->query("
         SELECT 
             SUM(CASE WHEN durum = 'beklemede' THEN 1 ELSE 0 END) as beklemede,
@@ -28,6 +28,7 @@ try {
 }
 ?>
 
+<!-- admin paneli arayüz tasarımı ve yönetim sayfası stilleri -->
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -47,7 +48,7 @@ try {
         
         body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg-light); display: flex; color: var(--text-main); }
         
-        /* Kurumsal Sidebar */
+        /* sidebar tasarımı */
         .sidebar { 
             width: 260px; background: var(--admin-dark); height: 100vh; color: white; 
             padding: 40px 25px; position: fixed; display: flex; flex-direction: column; box-sizing: border-box; 
@@ -64,12 +65,12 @@ try {
         .logout-btn { margin-top: auto; color: #fca5a5; display: flex; align-items: center; padding: 15px 20px; text-decoration:none; border-radius:12px; transition:0.3s;}
         .logout-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
 
-        /* Ana İçerik */
+        /* ana içerik */
         .main { margin-left: 260px; padding: 40px 50px; width: calc(100% - 260px); box-sizing: border-box; }
         
         .header-title { font-size: 28px; font-weight: 700; color: #1e293b; margin-top: 0; margin-bottom: 30px; }
 
-        /* İstatistik Kartları */
+        /* istatistik kartları */
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 40px; }
         .stat-card { 
             background: white; padding: 25px; border-radius: 20px; 
@@ -80,7 +81,7 @@ try {
         .stat-info span { display: block; font-size: 14px; color: #64748b; font-weight: 500; text-transform: uppercase; }
         .stat-info strong { font-size: 28px; color: #1e293b; font-weight: 700; line-height: 1.2; }
 
-        /* Başvuru Kartları */
+        /* başvuru kartları */
         .applications-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
         .app-card { 
             background: white; border-radius: 20px; padding: 25px;
@@ -156,7 +157,7 @@ try {
         <?php if($bekleyenler): ?>
             <?php foreach($bekleyenler as $b): ?>
                 <?php 
-                    // Uzmanlık alanından rolü ayrıştıralım (Örn: "HOCA - Fitness" ise)
+                    // uzmanlık alanı rollerini ayrıştırma
                     $rol_badge = (strpos(strtolower($b['uzmanlik']), 'hoca') !== false) ? 'badge-hoca' : 'badge-diyet';
                 ?>
                 <div class="app-card">

@@ -1,27 +1,27 @@
 <?php
 session_start();
-include 'includes/db.php'; // Veritabanı bağlantın
+include 'includes/db.php'; // veritabanı bağlantısı
 
 if (isset($_POST['giris_yap'])) {
     $kullanici_adi = $_POST['kullanici_adi'];
     $sifre = $_POST['sifre'];
 
-    // Kullanıcıyı veritabanında bul
+    // kullanıcıyı veritabanında bul
     $sql = "SELECT * FROM kullanicilar WHERE kullanici_adi = '$kullanici_adi' AND sifre = '$sifre'";
     $result = $conn->query($sql);
 
     if ($result->num_rows > 0) {
         $user = $result->fetch_assoc();
         
-        // Oturum değişkenlerini ata
+        // oturum değişkenlerini ata
         $_SESSION['user_id'] = $user['id'];
-        $_SESSION['rol'] = $user['rol']; // admin mi, normal kullanıcı mı?
+        $_SESSION['rol'] = $user['rol']; // admin mi normal kullanıcı mı
 
-        // --- YÖNLENDİRME MANTIĞI ---
+        // yönlendirme mantığı
         if ($user['rol'] == 'admin') {
-            header("Location: basvuru_yonetim.php"); // Buraya gidecek
+            header("Location: basvuru_yonetim.php"); // buraya gidecek
         } else {
-            header("Location: index.php"); // Normal kullanıcı panelin
+            header("Location: index.php"); // normal kullanıcı paneli
         }
         exit();
     } else {

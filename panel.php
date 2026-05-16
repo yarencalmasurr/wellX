@@ -2,7 +2,7 @@
 session_start(); 
 include 'baglan.php'; 
 
-// Oturum kontrolü
+// oturum kontrolü
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit();
@@ -10,12 +10,12 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// --- HATAYI ÇÖZEN KISIM: Kullanıcı Verilerini Çek ---
+// kullanıcı verilerini çek
 $user_sorgu = $conn->prepare("SELECT * FROM kullanicilar WHERE id = ?");
 $user_sorgu->execute([$user_id]);
 $user_data = $user_sorgu->fetch(PDO::FETCH_ASSOC);
 
-// Güvenlik: Danışan değilse erişimi engelle
+//  danışan değilse erişimi engelle
 if (!$user_data || ($_SESSION['rol'] != 'danışan' && $_SESSION['rol'] != 'danisan')) {
     header("Location: index.php"); 
     exit();
@@ -24,7 +24,7 @@ if (!$user_data || ($_SESSION['rol'] != 'danışan' && $_SESSION['rol'] != 'dani
 $bugun = date('Y-m-d');
 $is_premium = $user_data['is_premium'] ?? 0;
 
-// --- UZMAN EŞLEŞME KONTROLLERİ (İsimleriyle Birlikte Çekilir) ---
+// uzman eşleşme kontrolü
 $diy_kontrol = $conn->prepare("
     SELECT k.ad_soyad 
     FROM uzman_danisan_eslesmeleri ude 
@@ -43,7 +43,7 @@ $hoca_kontrol = $conn->prepare("
 $hoca_kontrol->execute([$user_id]);
 $matched_hoca = $hoca_kontrol->fetch(PDO::FETCH_ASSOC);
 
-// --- BİLDİRİM KONTROLLERİ (Sadece Okunmamış Planlar) ---
+//bildirim kontrolleri
 $bildirim_beslenme = $conn->prepare("SELECT id FROM beslenme_planlari WHERE user_id = ? AND DATE(kayit_tarihi) = ? AND okundu = 0 LIMIT 1");
 $bildirim_beslenme->execute([$user_id, $bugun]);
 $yeni_beslenme = $bildirim_beslenme->fetch();
@@ -52,10 +52,10 @@ $bildirim_egzersiz = $conn->prepare("SELECT id FROM egzersiz_planlari WHERE user
 $bildirim_egzersiz->execute([$user_id, $bugun]);
 $yeni_egzersiz = $bildirim_egzersiz->fetch();
 
-// --- GENEL GÜNÜN ANTRENMANI (Sadece Bugünün Kaydını Getirir) ---
+// günün antrenmanı
 $genel_antrenman_sorgu = $conn->query("SELECT * FROM gunun_antrenmani WHERE DATE(ekleme_tarihi) = CURDATE() ORDER BY id DESC LIMIT 1");
 $genel_antrenman = $genel_antrenman_sorgu->fetch(PDO::FETCH_ASSOC);
-// --- GÜNÜN TARİFİ ---
+// günün tarifi
 $tarif_sorgu = $conn->prepare("
     SELECT t.*, k.ad_soyad 
     FROM gunun_tarifi t 
@@ -66,7 +66,7 @@ $tarif_sorgu = $conn->prepare("
 $tarif_sorgu->execute();
 $gunun_tarifi = $tarif_sorgu->fetch(PDO::FETCH_ASSOC);
 
-// Tarife Verilen Puan
+// tarife verilen puan
 $mevcut_puan = 0;
 if ($gunun_tarifi) {
     $puan_cek = $conn->prepare("SELECT puan FROM tarif_puanlari WHERE tarif_id = ? AND user_id = ?");
@@ -75,7 +75,7 @@ if ($gunun_tarifi) {
     $mevcut_puan = $puan_veri['puan'] ?? 0;
 }
 
-// --- İSTATİSTİKLER ---
+// istatistikler
 $stat_sorgu = $conn->prepare("
     SELECT 
         SUM(su_miktari) as t_su, 
@@ -129,7 +129,7 @@ $mevcut_kayit = $kontrol->fetch();
 
         #particles-js { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; pointer-events: none; }
         
-        /* Modern Sidebar (Glassmorphism) */
+        /* sidebar tasarımı */
         .sidebar { 
             width: 260px; height: 100vh; padding: 30px 20px; position: fixed; z-index: 100;
             background: rgba(255, 255, 255, 0.6);
@@ -172,7 +172,7 @@ $mevcut_kayit = $kontrol->fetch();
         .sidebar .logout-btn { margin-top: auto !important; background: rgba(254, 226, 226, 0.6); color: #ef4444 !important; font-weight: 600; }
         .sidebar .logout-btn:hover { background: #fee2e2; color: #dc2626 !important; transform: translateX(0) translateY(-2px); }
 
-        /* Main Content */
+        /* ana içerik */
         .main { margin-left: 260px; padding: 40px 50px; width: calc(100% - 260px); position: relative; z-index: 10; }
         .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .page-header h1 { font-size: 32px; font-weight: 800; margin: 0; letter-spacing: -1px; color: #0f172a;}
@@ -180,7 +180,7 @@ $mevcut_kayit = $kontrol->fetch();
         .premium-btn { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 12px 24px; border-radius: 14px; font-weight: 600; text-decoration: none; border: none; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); transition: 0.3s;}
         .premium-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4); color: white;}
 
-        /* Glass Cards */
+        /* cam kart görünümü */
         .glass-card {
             background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-radius: 24px; border: 1px solid var(--glass-border);
@@ -188,7 +188,7 @@ $mevcut_kayit = $kontrol->fetch();
         }
         .glass-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06); }
 
-        /* UZMAN KARTLARI */
+        /* uzman kartları */
         .experts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
         .expert-card { padding: 20px; display: flex; justify-content: space-between; align-items: center; }
         
@@ -201,7 +201,7 @@ $mevcut_kayit = $kontrol->fetch();
         .expert-details h4 { margin: 0 0 4px 0; font-size: 14px; color: var(--text-muted); font-weight: 500;}
         .expert-details strong { font-size: 16px; color: var(--text-main); }
 
-        /* BİLDİRİMLER */
+        /* bildirimler */
         .notifications-stack { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
         .alert-item { padding: 18px 24px; color: white; display: flex; justify-content: space-between; align-items: center; border: none;}
         .alert-diet { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
@@ -209,7 +209,7 @@ $mevcut_kayit = $kontrol->fetch();
         .btn-alert { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 12px; font-weight: 600; text-decoration: none; transition: 0.2s; }
         .btn-alert:hover { background: rgba(255,255,255,0.3); color: white; }
 
-        /* GÜNÜN PLANI */
+        /* günün planı */
         .daily-plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
         .plan-card { padding: 25px; display: flex; flex-direction: column;}
         .plan-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
@@ -217,12 +217,12 @@ $mevcut_kayit = $kontrol->fetch();
         .plan-content { color: var(--text-main); font-size: 14px; line-height: 1.6; flex-grow: 1; }
         .plan-footer { margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;}
 
-        /* Star Rating */
+        /* yıldız oylama */
         .rating-form { display: flex; gap: 5px; }
         .rating-btn { background: rgba(255,255,255,0.8); border: 1px solid #e2e8f0; color: var(--text-muted); padding: 6px 12px; border-radius: 10px; font-size: 12px; cursor: pointer; transition: 0.2s; font-weight: 600;}
         .rating-btn.active, .rating-btn:hover { background: #fef3c7; border-color: #f59e0b; color: #d97706; transform: scale(1.05);}
 
-        /* İSTATİSTİKLER */
+        /* istatistikler */
         .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-bottom: 40px; }
         .stat-card { padding: 24px; text-align: center; position: relative; overflow: hidden;}
         .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px; }
@@ -234,7 +234,7 @@ $mevcut_kayit = $kontrol->fetch();
         .stat-title { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
         .stat-value { font-size: 26px; font-weight: 800; color: var(--text-main); }
 
-        /* ====== YENİ VERİ GİRİŞ FORMU TASARIMI ====== */
+        /* yeni veri giriş formu tasarımı */
         .entry-form-card { padding: 35px; margin-bottom: 40px;}
         
         .form-grid-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 25px; }
@@ -260,7 +260,7 @@ $mevcut_kayit = $kontrol->fetch();
         .btn-submit { background: linear-gradient(135deg, var(--blue) 0%, #2563eb 100%); color: white; padding: 18px; border-radius: 18px; font-weight: 600; font-size:16px; width: 100%; border: none; transition: 0.3s; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);}
         .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(59, 130, 246, 0.3); }
 
-        /* Modal Glassmorphism */
+       
         .modal-content { border-radius: 24px; border: none; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); box-shadow: 0 25px 50px rgba(0,0,0,0.1);}
     </style>
 </head>

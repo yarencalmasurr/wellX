@@ -5,12 +5,12 @@ include 'baglan.php';
 if (!isset($_SESSION['user_id'])) { header("Location: index.php"); exit(); }
 $user_id = $_SESSION['user_id'];
 
-// --- PREMIUM KONTROLÜ ---
+//premium kontrolü
 $user_sorgu = $conn->prepare("SELECT is_premium FROM kullanicilar WHERE id = ?");
 $user_sorgu->execute([$user_id]);
 $is_premium = $user_sorgu->fetchColumn() ?? 0;
 
-// Kullanıcının rozetlerini çek
+// kullanıcının rozetlerini çek
 $sorgu = $conn->prepare("
     SELECT r.*, kr.kazanma_tarihi 
     FROM rozetler r 

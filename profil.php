@@ -5,7 +5,7 @@ include 'baglan.php';
 if (!isset($_SESSION['user_id'])) { header("Location: index.php"); exit(); }
 $user_id = $_SESSION['user_id'];
 
-// Mevcut kullanıcı verilerini çek
+// mevcut kullanıcı verilerini çek
 $sorgu = $conn->prepare("SELECT * FROM kullanicilar WHERE id = ?");
 $sorgu->execute([$user_id]);
 $user = $sorgu->fetch(PDO::FETCH_ASSOC);

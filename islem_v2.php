@@ -10,7 +10,7 @@ $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $is = $_GET['is'] ?? '';
 
 try {
-    // --- 1. GİRİŞ SİSTEMİ ---
+    // 1.giriş sistemi
     if ($is == 'login') {
         $kadi  = trim($_POST['kullanici'] ?? '');
         $sifre = trim($_POST['sifre']     ?? '');
@@ -36,7 +36,7 @@ try {
         }
     }
 
-    // --- 2. UZMAN KAYIT (BAŞVURU) ---
+    // 2. uzman kayıt
     elseif ($is == 'uzman_basvuru' || $is == 'uzman_kayit') {
         $ad_soyad = $_POST['ad_soyad'];
         $email    = $_POST['email'];
@@ -54,7 +54,7 @@ try {
         exit();
     }
 
-    // --- 3. DANIŞAN KAYIT ---
+    // 3. danışan kayıt 
     elseif ($is == 'kayit_ol') {
         $ad_soyad = $_POST['ad_soyad'];
         $kadi = $_POST['kullanici_adi'];
@@ -67,7 +67,7 @@ try {
         exit();
     }
 
-// --- 4. VERİLERİ KAYDET (DANIŞAN PANELİ - SINIRSIZ EKLEME MANTIĞI) ---
+// 4. verileri kaydet
     elseif ($is == 'verileri_kaydet') {
         $user_id = $_SESSION['user_id'];
         $su      = (float)$_POST['su_miktari'];
@@ -78,18 +78,18 @@ try {
         $kilo    = (float)$_POST['guncel_kilo'];
         $tarih   = date('Y-m-d');
 
-        // Mevcut verileri çek (Uyku dahil edildi)
+        // mevcut verileri çek
         $kontrol = $conn->prepare("SELECT id, su_miktari, alinan_kalori, spor_suresi, yakilan_kalori, uyku_suresi FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
         $kontrol->execute([$user_id, $tarih]);
         $mevcut_kayit = $kontrol->fetch(PDO::FETCH_ASSOC);
 
         if ($mevcut_kayit) {
-            // Kayıt VAR ise üzerine ekleyerek güncelle (Kilo hariç)
+            // kayıt var ise üzerine ekleyerek güncelle 
             $yeni_su = $mevcut_kayit['su_miktari'] + $su;
             $yeni_alinan = $mevcut_kayit['alinan_kalori'] + $alinan;
             $yeni_spor = $mevcut_kayit['spor_suresi'] + $spor;
             $yeni_yakilan = $mevcut_kayit['yakilan_kalori'] + $yakilan;
-            $yeni_uyku = $mevcut_kayit['uyku_suresi'] + $uyku; // Uyku üzerine ekleniyor
+            $yeni_uyku = $mevcut_kayit['uyku_suresi'] + $uyku; 
 
             $guncelle = $conn->prepare("
                 UPDATE aktivite_kayitlari 
@@ -98,23 +98,23 @@ try {
             ");
             $guncelle->execute([$yeni_su, $yeni_alinan, $yeni_spor, $yeni_uyku, $kilo, $yeni_yakilan, $mevcut_kayit['id']]);
             
-            // Rozetler için toplam değerleri değişkene atıyoruz
+            // rozetler için toplam değerleri değişkene atıyoruz
             $toplam_su_kontrol = $yeni_su;
             $toplam_spor_kontrol = $yeni_spor;
             $toplam_uyku_kontrol = $yeni_uyku;
         } else {
-            // Kayıt YOK ise yeni satır oluştur
+            // kayıt yoksa yeni satır oluştur
             $ekle = $conn->prepare("INSERT INTO aktivite_kayitlari (user_id, su_miktari, uyku_suresi, alinan_kalori, yakilan_kalori, spor_suresi, guncel_kilo, kayit_tarihi) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
             $ekle->execute([$user_id, $su, $uyku, $alinan, $yakilan, $spor, $kilo, $tarih]);
             
-            // Rozetler için toplam değerleri değişkene atıyoruz
+            // rozetler için toplam değerleri değişkene atıyoruz
             $toplam_su_kontrol = $su;
             $toplam_spor_kontrol = $spor;
             $toplam_uyku_kontrol = $uyku;
         }
 
-        // Rozet Kontrolü (Hata Giderildi: Uyku da eklendi ve toplam değerler kullanıldı)
-        // Rozet Kontrolü
+        
+        // rozet kontrolü
 $yeni_rozet = "";
 
 if(file_exists('rozet_fonksiyonu.php')) {
@@ -145,7 +145,7 @@ if(!empty($yeni_rozet)) {
 exit();
 }
 
-    // --- 5. UZMAN ATAMA (DANIŞANIN UZMAN SEÇMESİ) ---
+    // 5. danışanın uzmanı seçmesi
     elseif ($is == 'uzman_atama') {
         $danisan_id = $_SESSION['user_id'];
         $uzman_id = $_GET['uzman_id'];
@@ -160,7 +160,7 @@ exit();
         exit();
     }
 
-    // --- 6. UZMANIN KİŞİYE ÖZEL PLAN YAZMASI ---
+    // 6. uzmanın kişiye özel plan yazması
     elseif ($is == 'plan_yaz' || $is == 'egzersiz_yaz') {
         $uzman_id = $_SESSION['user_id'];
         $danisan_id = $_POST['danisan_id'];
@@ -177,7 +177,7 @@ exit();
         exit();
     }
 
-    // --- 7. TARİFE PUAN VERME ---
+    // 7. tarife puan verme
     elseif ($is == 'puan_ver') {
         $user_id = $_SESSION['user_id'];
         $tarif_id = $_POST['tarif_id'];
@@ -195,7 +195,7 @@ exit();
         exit();
     }
 
-    // --- 8. ADMIN BAŞVURU ONAY/RED ---
+    // 8. admin başvuru onaylama ya da ret
     elseif ($is == 'onayla') {
         $conn->prepare("UPDATE uzman_basvurulari SET durum = 'onaylandi' WHERE id = ?")->execute([$_GET['id']]);
         header("Location: basvuru_yonetim.php?durum=onaylandi");
@@ -207,7 +207,7 @@ exit();
         exit();
     }
 
-    // --- 9. PROFİL GÜNCELLEME ---
+    // 9. profil güncelleme
     elseif ($is == 'profil_guncelle') {
         $user_id = $_SESSION['user_id'];
         $ad_soyad = $_POST['ad_soyad'];
@@ -226,7 +226,7 @@ exit();
         exit();
     }
 
-    // --- 10. PREMIUM: UZMANA SORU SORMA ---
+    // 10. premium özellik uzmana soru sorma
     elseif ($is == 'soru_sor') {
         $danisan_id = $_SESSION['user_id'];
         $uzman_id = $_POST['uzman_id'];
@@ -241,7 +241,7 @@ exit();
         exit();
     }
 
-    // --- 11. UZMAN: SORUYU CEVAPLAMA ---
+    // -11. uzmanın soruyu cevaplaması
     elseif ($is == 'cevapla') {
         $soru_id = $_POST['soru_id'];
         $cevap = $_POST['cevap_metni'];
@@ -258,7 +258,7 @@ exit();
         exit();
     }
 
-    // --- 12. GÜNÜN TARİFİNİ PAYLAŞ (DİYETİSYEN) ---
+    // 12. günün tarifi paylaşma
     elseif ($is == 'tarif_paylas') {
         $diyetisyen_id = $_SESSION['user_id'];
         $baslik = $_POST['tarif_baslik'];
@@ -270,11 +270,11 @@ exit();
         exit();
     }
 
-    // --- 13. GÜNÜN ANTRENMANINI PAYLAŞ (HOCA DUYURUSU) ---
+    // 13. günün antrenmanını paylaşma
     elseif ($is == 'antrenman_paylas' || $is == 'antrenman_duyuru_kaydet') {
         $hoca_id = $_SESSION['user_id'];
         
-        // Hoca panelindeki formdan (name) gelen veriler alınıyor
+        // hoca panelindeki formdan gelen veriler alınıyor
         $baslik = $_POST['duyuru_baslik'] ?? $_POST['antrenman_baslik'];
         $icerik = $_POST['duyuru_icerik'] ?? $_POST['antrenman_icerik'];
 
@@ -285,7 +285,7 @@ exit();
         exit();
     }
 
-    // --- 14. PREMIUM: FOTOĞRAF YÜKLEME ---
+    // 14. premium özellik fotoğraf yükleme
     elseif ($is == 'foto_yukle') {
         $user_id = $_SESSION['user_id'];
         if (isset($_FILES['form_foto']) && $_FILES['form_foto']['error'] == 0) {
@@ -304,7 +304,7 @@ exit();
         exit();
     }
 
-    // --- 15. PREMIUM: FOTOĞRAF SİLME ---
+    // 15. premium özellik fotoğraf silme
     elseif ($is == 'foto_sil') {
         $foto_id = $_GET['id'];
         $user_id = $_SESSION['user_id'];
@@ -319,7 +319,7 @@ exit();
         exit();
     }
 
-    // --- 16. HIZLI VERİ GÜNCELLEME ---
+    // 16. hızlı veri güncelleme
     elseif ($is == 'hizli_guncelle') {
         $user_id = $_SESSION['user_id'];
         $alan = $_POST['alan']; 
@@ -341,7 +341,7 @@ exit();
         exit();
     }
 
-    // --- 17. YEMEK EKLEME İŞLEMİ (BESLENME GÜNLÜĞÜ) ---
+    // 17. yemek ekleme işlemi
     elseif ($is == 'yemek_ekle') {
         $user_id = $_SESSION['user_id'];
         $tarih = date('Y-m-d');
@@ -350,42 +350,42 @@ exit();
         $miktar = $_POST['miktar'];
         $toplam_kalori = $_POST['toplam_kalori'];
 
-        // 1. Veriyi Beslenme Günlüğüne Ekle
-        $birim = $_POST['birim'] ?? 'Adet'; // Formdan gelen birimi al
+        // 1. veriyi beslenme günlüğüne ekle
+        $birim = $_POST['birim'] ?? 'Adet'; // formdan gelen birimi al
         $yemek_kaydet = $conn->prepare("INSERT INTO beslenme_gunlugu (user_id, tarih, besin_adi, miktar, birim, toplam_kalori) VALUES (?, ?, ?, ?, ?, ?)");
         $yemek_kaydet->execute([$user_id, $tarih, $besin_adi, $miktar, $birim, $toplam_kalori]);
 
-        // 2. Ana Tablodaki (aktivite_kayitlari) Toplam Kaloriyi Güncelle
+        // 2. aktivite_kayitlari toplam kaloriyi güncelle
         $kontrol = $conn->prepare("SELECT id FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
         $kontrol->execute([$user_id, $tarih]);
         
         if ($kontrol->rowCount() > 0) {
-            // Bugün kayıt varsa, kalorinin üzerine ekle
+            // bugün kayıt varsa kalorinin üzerine ekle
             $guncelle = $conn->prepare("UPDATE aktivite_kayitlari SET alinan_kalori = alinan_kalori + ? WHERE user_id = ? AND kayit_tarihi = ?");
             $guncelle->execute([$toplam_kalori, $user_id, $tarih]);
         } else {
-            // Bugün ilk defa bir şey giriyorsa yeni satır oluştur
+            // bugün ilk defa bir şey giriyorsa yeni satır oluştur
             $yeni_kayit = $conn->prepare("INSERT INTO aktivite_kayitlari (user_id, kayit_tarihi, alinan_kalori, su_miktari, uyku_suresi, yakilan_kalori, spor_suresi, guncel_kilo) VALUES (?, ?, ?, 0, 0, 0, 0, 0)");
             $yeni_kayit->execute([$user_id, $tarih, $toplam_kalori]);
         }
 
-        // İşlem bitince panele geri gönder
+        // işlem bitince panele geri gönder
         header("Location: panel.php?durum=basarili");
         exit();
     }
 
-    // --- PREMIUM İPTAL İŞLEMİ ---
+    // premium iptal işlemi
     elseif (isset($_GET['is']) && $_GET['is'] == 'premium_iptal') {
-        // Oturumdaki kullanıcı ID'sini alıyoruz
+        // oturumdaki kullanıcı id alıyoruz
         $uid = $_SESSION['user_id'];
         
         try {
-            // Veritabanında is_premium sütununu 0 yapıyoruz
+            // veritabanında is_premium sütununu 0 yapıyoruz
             $sorgu = $conn->prepare("UPDATE kullanicilar SET is_premium = 0 WHERE id = ?");
             $sonuc = $sorgu->execute([$uid]);
             
             if ($sonuc) {
-                // Başarılıysa panel.php'ye geri gönder
+                // başarılıysa panel.php geri gönder
                 header("Location: panel.php?durum=iptal_basarili");
                 exit();
             } else {
@@ -396,7 +396,7 @@ exit();
         }
     }
 
-    // --- 18. EGZERSİZ EKLEME İŞLEMİ (EGZERSİZ GÜNLÜĞÜ) ---
+    // 18. egzersiz ekleme işlemi
     elseif ($is == 'egzersiz_ekle') {
         $user_id = $_SESSION['user_id'];
         $tarih = date('Y-m-d');
@@ -405,20 +405,20 @@ exit();
         $sure_dk = $_POST['sure_dk'];
         $yakilan_kalori = $_POST['yakilan_kalori'];
 
-        // 1. Veriyi Egzersiz Günlüğüne Ekle
+        // 1. veriyi egzersiz günlüğüne ekle
         $spor_kaydet = $conn->prepare("INSERT INTO egzersiz_gunlugu (user_id, tarih, egzersiz_adi, sure_dk, yakilan_kalori) VALUES (?, ?, ?, ?, ?)");
         $spor_kaydet->execute([$user_id, $tarih, $egzersiz_adi, $sure_dk, $yakilan_kalori]);
 
-        // 2. Ana Tablodaki Toplam Süre ve Yakılan Kaloriyi Güncelle
+        // 2. aktivite_kayitlari toplam süre ve yakılan kaloriyi güncelle
         $kontrol = $conn->prepare("SELECT id FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
         $kontrol->execute([$user_id, $tarih]);
         
         if ($kontrol->rowCount() > 0) {
-            // Kayıt varsa üzerine ekle
+            // kayıt varsa üzerine ekle
             $guncelle = $conn->prepare("UPDATE aktivite_kayitlari SET yakilan_kalori = yakilan_kalori + ?, spor_suresi = spor_suresi + ? WHERE user_id = ? AND kayit_tarihi = ?");
             $guncelle->execute([$yakilan_kalori, $sure_dk, $user_id, $tarih]);
         } else {
-            // Kayıt yoksa yeni satır oluştur
+            // kayıt yoksa yeni satır oluştur
             $yeni_kayit = $conn->prepare("INSERT INTO aktivite_kayitlari (user_id, kayit_tarihi, yakilan_kalori, spor_suresi, su_miktari, uyku_suresi, alinan_kalori, guncel_kilo) VALUES (?, ?, ?, ?, 0, 0, 0, 0)");
             $yeni_kayit->execute([$user_id, $tarih, $yakilan_kalori, $sure_dk]);
         }

@@ -1,8 +1,5 @@
 <?php
-/**
- * Proje: saglik_portali
- * Dosya: uzman_secmesi.php
- */
+
 
 session_start();
 include 'baglan.php';
@@ -12,17 +9,17 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Gelen rolü temizle ve küçük harfe çevir (hoca veya diyetisyen)
+// gelen rolü temizle ve küçük harfe çevir 
 $rol_tipi = isset($_GET['rol']) ? strtolower(trim($_GET['rol'])) : ''; 
 
-// GÜVENLİK: Sadece 'diyetisyen' ve 'hoca' rollerinin aranmasına izin veriyoruz.
-// URL'den manipüle edilip 'danışan' listelenmesi engellendi.
+
+// urlden manipüle edilip danışan listelenmesi engellendi.
 if (!in_array($rol_tipi, ['diyetisyen', 'hoca'])) {
     header("Location: panel.php"); 
     exit();
 }
 
-// Veritabanındaki uzmanları çekerken kullanıcı adını (kullanici_adi) da ekledik
+// veritabanındaki uzmanları çekerken  kullanici_adi da ekledik
 $sorgu = $conn->prepare("SELECT id, ad_soyad, kullanici_adi, email FROM kullanicilar WHERE LOWER(rol) = ?");
 $sorgu->execute([$rol_tipi]);
 $uzmanlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);

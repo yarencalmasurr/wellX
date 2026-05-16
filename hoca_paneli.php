@@ -12,7 +12,7 @@ $bugun = date('Y-m-d');
 $son_duyuru = null;
 
 try {
-    // 1. Danışanları Çek ve Bugünkü Spor Günlüğünü Getir
+    // 1. danışanları çek ve bugünkü spor günlüğünü getir
     $sorgu = $conn->prepare("
         SELECT k.id, k.ad_soyad, k.email,
         (SELECT SUM(spor_suresi) FROM aktivite_kayitlari WHERE user_id = k.id AND kayit_tarihi = ?) as bugunku_spor,
@@ -26,7 +26,7 @@ try {
     $sorgu->execute([$bugun, $bugun, $hoca_id]);
     $danisanlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2. Bekleyen Soruları Çek
+    // 2. bekleyen soruları çek
     $soru_sorgu = $conn->prepare("
         SELECT us.*, k.ad_soyad as danisan_adi 
         FROM uzman_sorulari us 
@@ -37,7 +37,7 @@ try {
     $soru_sorgu->execute([$hoca_id]);
     $gelen_sorular = $soru_sorgu->fetchAll(PDO::FETCH_ASSOC);
 
-    // 3. Geçmiş Duyuruları Çek (Son 5 Duyuru)
+    // 3. geçmiş duyuruları çek (son 5 duyuru)
     $duyuru_sorgu = $conn->prepare("SELECT * FROM gunun_antrenmani WHERE hoca_id = ? ORDER BY id DESC LIMIT 5");
     $duyuru_sorgu->execute([$hoca_id]);
     $gecmis_duyurular = $duyuru_sorgu->fetchAll(PDO::FETCH_ASSOC);
@@ -85,7 +85,7 @@ try {
         .glass-card { background: var(--glass-bg); backdrop-filter: blur(15px); border-radius: 24px; border: 1px solid var(--glass-border); box-shadow: 0 15px 35px rgba(0,0,0,0.03); padding: 30px; transition: 0.3s ease; }
         .glass-card h3 { margin-top: 0; margin-bottom: 20px; font-size: 18px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 10px; }
         
-        /* Grid Güncellemesi */
+        
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; align-items: start; }
         
         input[type="text"], textarea { width: 100%; padding: 15px 18px; border-radius: 16px; border: 1px solid #e2e8f0; background: rgba(255,255,255,0.9); margin-bottom: 20px; font-family: inherit; font-size: 14px; transition: 0.3s; }

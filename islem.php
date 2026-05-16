@@ -3,13 +3,13 @@ ob_start();
 session_start();
 include 'baglan.php';
 
-// Hata raporlamayı aç (Eğer bir sorun olursa ekranda görmek için)
+// hata raporlama
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 $is = $_GET['is'] ?? '';
 
-// --- 1. DANIŞAN KAYIT İŞLEMİ ---
+// 1. danışan kayıt işlemi
 if ($is == 'danisan_kayit') {
     $ad_soyad = $_POST['ad_soyad'] ?? '';
     $kadi     = $_POST['kullanici'] ?? '';
@@ -19,7 +19,7 @@ if ($is == 'danisan_kayit') {
 
     if (!empty($ad_soyad) && !empty($kadi) && !empty($sifre)) {
         try {
-            // Kullanıcı adı kontrolü
+            // kullanıcı adı kontrolü
             $kontrol = $conn->prepare("SELECT * FROM kullanicilar WHERE kullanici_adi = ?");
             $kontrol->execute([$kadi]);
             
@@ -41,7 +41,7 @@ if ($is == 'danisan_kayit') {
     }
 }
 
-// --- 2. UZMAN (SPOR HOCASI & DİYETİSYEN) BAŞVURU KAYDI ---
+// 2. uzman başvuru kaydı
 elseif ($is == 'uzman_kayit' || $is == 'hoca_kayit') {
     $ad_soyad = $_POST['ad_soyad'] ?? '';
     $email    = $_POST['email']    ?? '';
@@ -64,7 +64,7 @@ elseif ($is == 'uzman_kayit' || $is == 'hoca_kayit') {
     }
 }
 
-// --- 3. UZMAN ONAYLAMA VE OTOMATİK KULLANICI OLUŞTURMA ---
+// 3. uzman onaylama ve otomatik kullanıcı oluşturma
 elseif ($is == 'onayla') {
     $bid = $_GET['id'] ?? 0;
 
@@ -101,7 +101,7 @@ elseif ($is == 'onayla') {
 }
 
 
-// --- 4. GİRİŞ İŞLEMİ ---
+// 4. giriş işlemi
 elseif ($is == 'login') {
     $kadi  = $_POST['kullanici'] ?? '';
     $sifre = $_POST['sifre']     ?? '';
@@ -115,7 +115,7 @@ elseif ($is == 'login') {
         $_SESSION['ad_soyad'] = $user['ad_soyad'];
         $_SESSION['rol']      = $user['rol'];
 
-        // --- YÖNLENDİRME MANTIĞI BURAYA GELMELİ ---
+        // yönlendirme mantığı 
         if ($user['rol'] == 'admin') {
             header("Location: basvuru_yonetim.php");
         } elseif ($user['rol'] == 'diyetisyen') {
@@ -123,7 +123,7 @@ elseif ($is == 'login') {
         } elseif ($user['rol'] == 'hoca') {
             header("Location: hoca_paneli.php");
         } else {
-            header("Location: panel.php"); // Normal danışan paneli
+            header("Location: panel.php"); // normal danışan paneli
         }
         exit();
     } else {

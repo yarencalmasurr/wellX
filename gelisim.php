@@ -5,18 +5,18 @@ include 'baglan.php';
 if (!isset($_SESSION['user_id'])) { header("Location: index.php"); exit(); }
 $user_id = $_SESSION['user_id'];
 
-// --- 1. PREMIUM KONTROLÜ ---
+//1. premium kontrolü 
 $user_sorgu = $conn->prepare("SELECT is_premium, ad_soyad FROM kullanicilar WHERE id = ?");
 $user_sorgu->execute([$user_id]);
 $user_data = $user_sorgu->fetch(PDO::FETCH_ASSOC);
 $is_premium = $user_data['is_premium'] ?? 0;
 
-// --- 2. FOTOĞRAFLARI ÇEK (Tarihe Göre) ---
+//2. tarihe göre fotoğrafları çek
 $foto_sorgu = $conn->prepare("SELECT * FROM gelisim_fotograflari WHERE user_id = ? ORDER BY yuklenme_tarihi DESC");
 $foto_sorgu->execute([$user_id]);
 $fotograflar = $foto_sorgu->fetchAll(PDO::FETCH_ASSOC);
 
-// --- 3. GRAFİK VERİLERİNİ ÇEK ---
+//3. grafik verilerini çek
 $sorgu = $conn->prepare("SELECT * FROM aktivite_kayitlari WHERE user_id = ? ORDER BY kayit_tarihi DESC LIMIT 10");
 $sorgu->execute([$user_id]);
 $veriler = array_reverse($sorgu->fetchAll(PDO::FETCH_ASSOC));
@@ -57,7 +57,7 @@ foreach($veriler as $v) {
 
         #particles-js { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; pointer-events: none; }
         
-        /* Modern Sidebar (Glassmorphism) */
+        /* sidebar tasarımı */
         .sidebar { 
             width: 260px; height: 100vh; padding: 30px 20px; position: fixed; z-index: 100;
             background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -91,7 +91,7 @@ foreach($veriler as $v) {
         .header-icon { background: linear-gradient(135deg, #0ea5e9, #0284c7); width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; box-shadow: 0 8px 20px rgba(14,165,233,0.3);}
         .page-header h1 { font-size: 32px; font-weight: 800; margin: 0; letter-spacing: -1px; color: #0f172a;}
 
-        /* Glass Cards */
+        /*cam kart görünümü */
         .glass-card {
             background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-radius: 24px; border: 1px solid var(--glass-border);
@@ -103,7 +103,7 @@ foreach($veriler as $v) {
         .top-grid { display: grid; grid-template-columns: 1.2fr 1.2fr 0.8fr; gap: 25px; margin-bottom: 30px; }
         .chart-box { height: 240px; width: 100%; position: relative; }
 
-        /* Fotoğraf Alanı */
+        /* fotoğraf alanı tasarımı */
         .btn-upload-trigger { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border: none; padding: 14px; border-radius: 16px; font-weight: 600; width: 100%; transition: 0.3s; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);}
         .btn-upload-trigger:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0,0,0,0.2); }
 
@@ -116,10 +116,10 @@ foreach($veriler as $v) {
         .delete-btn { position: absolute; top: 5px; right: 5px; background: #ef4444; color: white; width: 22px; height: 22px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 10px; text-decoration: none; z-index: 10; border: 2px solid white; }
         .foto-item:hover .delete-btn { display: flex; }
 
-        /* Premium Lock */
+        
         .premium-lock { background: rgba(254, 243, 199, 0.8); border: 2px dashed #fcd34d; padding: 25px 20px; border-radius: 20px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; }
 
-        /* Tablo */
+        /* tablo */
         .table-wrapper { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; padding: 15px; font-size: 13px; font-weight: 700; color: var(--text-muted); border-bottom: 2px solid rgba(0,0,0,0.05); text-transform: uppercase; }

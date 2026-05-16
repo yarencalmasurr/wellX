@@ -1,3 +1,4 @@
+<!-- kullanıcıların sisteme beslenme uzmanı olarak başvuru yapabildiği başvuru sayfası -->
 <!DOCTYPE html>
 <html lang="tr">
 <head>

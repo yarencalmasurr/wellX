@@ -1,9 +1,5 @@
 <?php
-/**
- * Proje: saglik_portali
- * Dosya: sorularim.php
- * Açıklama: Premium üyeler için Soru Sorma ve Cevap Takip sayfası (Glassmorphism & Chat UI).
- */
+//premium üyeler için soru sorma ve cevap takip sayfası
 
 session_start(); 
 include 'baglan.php'; 
@@ -15,7 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// Kullanıcı Verilerini Çek
+// kullanıcı verilerini çek
 $sorgu = $conn->prepare("SELECT * FROM kullanicilar WHERE id = ?");
 $sorgu->execute([$user_id]);
 $user_data = $sorgu->fetch(PDO::FETCH_ASSOC);
@@ -52,7 +48,7 @@ function isActive($page, $current) { return ($page == $current) ? 'active' : '';
 
         #particles-js { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; pointer-events: none; }
         
-        /* Modern Sidebar (Glassmorphism) */
+        
         .sidebar { 
             width: 260px; height: 100vh; padding: 30px 20px; position: fixed; z-index: 100;
             background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -80,7 +76,7 @@ function isActive($page, $current) { return ($page == $current) ? 'active' : '';
         .sidebar .logout-btn { margin-top: auto !important; background: rgba(254, 226, 226, 0.6); color: #ef4444 !important; font-weight: 600; }
         .sidebar .logout-btn:hover { background: #fee2e2; color: #dc2626 !important; transform: translateX(0); }
 
-        /* Main Content */
+        
         .main { margin-left: 260px; padding: 40px 50px; width: calc(100% - 260px); position: relative; z-index: 10; box-sizing: border-box;}
         
         .page-header { display: flex; align-items: center; gap: 15px; margin-bottom: 40px; }
@@ -88,14 +84,14 @@ function isActive($page, $current) { return ($page == $current) ? 'active' : '';
         .page-header h1 { font-size: 32px; font-weight: 800; margin: 0; letter-spacing: -1px; color: #0f172a;}
         .page-header p { margin: 0; color: var(--text-muted); font-size: 15px; font-weight: 500;}
 
-        /* Glass Cards */
+        
         .glass-card {
             background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-radius: 24px; border: 1px solid var(--glass-border);
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.03); padding: 35px; margin-bottom: 30px;
         }
         
-        /* Form Elementleri (Gönderim Kartı) */
+        /* gönderim kartı */
         .form-select, .form-control {
             border-radius: 14px; border: 1px solid #e2e8f0; background: rgba(255,255,255,0.9);
             font-size: 15px; padding: 15px; color: var(--text-main); transition: 0.3s;
@@ -110,22 +106,22 @@ function isActive($page, $current) { return ($page == $current) ? 'active' : '';
 
         .premium-lock { background: rgba(254, 243, 199, 0.8); border-radius: 20px; border: 1px dashed #fcd34d; padding: 40px; text-align: center; }
 
-        /* ====== MODERN CHAT (SOHBET) TASARIMI ====== */
+        /* chat tasarımı */
         .chat-container { display: flex; flex-direction: column; gap: 25px; }
         
         .chat-bubble-wrapper { display: flex; flex-direction: column; gap: 10px; }
         
-        /* Benim Sorum (Sağa yaslı, mavi baloncuk) */
+        /* benim sorum tasarımı */
         .my-question { align-self: flex-end; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; padding: 15px 20px; border-radius: 20px 20px 0 20px; max-width: 80%; box-shadow: 0 10px 20px rgba(59,130,246,0.15);}
         .my-question-info { align-self: flex-end; font-size: 11px; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 5px;}
         
-        /* Uzmanın Cevabı (Sola yaslı, beyaz/cam baloncuk) */
+        /* uzmanın cevabı tasarımı */
         .expert-answer-wrapper { display: flex; gap: 15px; max-width: 85%; }
         .expert-avatar { width: 45px; height: 45px; border-radius: 14px; background: linear-gradient(135deg, #10b981, #059669); color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; box-shadow: 0 5px 15px rgba(16,185,129,0.2);}
         .expert-answer { background: rgba(255,255,255,0.9); padding: 15px 20px; border-radius: 0 20px 20px 20px; border: 1px solid #e2e8f0; color: var(--text-main); font-size: 14px; line-height: 1.6; box-shadow: 0 10px 25px rgba(0,0,0,0.03);}
         .expert-info { font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;}
         
-        /* Bekleyen Soru (Sarı rozet) */
+        /* bekleyen soru tasarımı */
         .waiting-badge { align-self: flex-end; background: rgba(254, 243, 199, 0.8); color: #d97706; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1px solid #fde68a;}
         
         .empty-chat { text-align: center; padding: 40px; color: var(--text-muted); }

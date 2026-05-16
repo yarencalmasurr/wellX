@@ -1,6 +1,6 @@
 <?php
 session_start();
-// Giriş kontrolü: Oturum açılmamışsa giriş sayfasına yönlendir
+// oturum açılmamışsa giriş sayfasına yönlendir
 if(!isset($_SESSION['user_id'])) { 
     header("Location: index.php"); 
     exit(); 

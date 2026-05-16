@@ -1,5 +1,5 @@
 <?php
-// PHP ile veritabanından verileri çektiğini varsayıyoruz
+// php ile veritabanından verileri çektiğini varsayıyoruz
 $veriler = [
     ['tarih' => '28.04.2026', 'kilo' => 2, 'spor' => '1\'', 'uyku' => '1s', 'su' => '1L'],
     ['tarih' => '27.04.2026', 'kilo' => 1, 'spor' => '2\'', 'uyku' => '2s', 'su' => '1L'],
@@ -16,13 +16,13 @@ $veriler = [
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .back-link { text-decoration: none; color: #5a6778; font-weight: 600; }
         
-        /* Özet Kutuları */
+        /* özet Kutuları */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
         .stat-box { background: #f8f9fa; padding: 15px 20px; border-radius: 20px; }
         .stat-val { font-weight: 600; font-size: 18px; display: block; }
         .stat-lbl { color: #999; font-size: 12px; }
 
-        /* Tablo */
+        /* tablo */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { text-align: left; color: #ccc; font-weight: 400; font-size: 12px; padding-bottom: 15px; }
         td { padding: 15px 0; border-bottom: 1px solid #f5f5f5; font-size: 14px; }

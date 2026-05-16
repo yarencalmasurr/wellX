@@ -3,15 +3,16 @@ $host = "127.0.0.1";
 $user = "root";
 $pass = ""; 
 $db   = "saglik_portali"; 
+// Veritabanına PDO ile bağlantı kuruluyor
+// İlk olarak 3307 portu deneniyor bağlantı olmazsa 3306 portu ile tekrar bağlantı kuruluyor
+// Hata oluşursa kullanıcıya bağlantı hatası mesajı gösteriliyor
 
-// Hangi portun aktif olduğunu ASLIamak için küçük bir mantık kuruyoruz
-// Eğer senin bilgisayarınsa 3307, değilse 3306'yı dener
 try {
-    // Önce 3307'yi dene (Senin için)
+    
     $conn = new PDO("mysql:host=$host;port=3307;dbname=$db;charset=utf8mb4", $user, $pass);
 } catch (PDOException $e) {
     try {
-        // Eğer 3307 başarısız olursa 3306'yı dene (Arkadaşların için)
+        
         $conn = new PDO("mysql:host=$host;port=3306;dbname=$db;charset=utf8mb4", $user, $pass);
     } catch (PDOException $e2) {
         die("Bağlantı başarısız: " . $e2->getMessage());

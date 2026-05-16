@@ -6,7 +6,7 @@ error_reporting(E_ALL);
 
 include 'baglan.php';
 
-// Kullanıcı giriş kontrolü
+// kullanıcı giriş kontrolü
 if (!isset($_SESSION['user_id'])) {
     die("Lütfen giriş yapın.");
 }
@@ -14,21 +14,21 @@ if (!isset($_SESSION['user_id'])) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $user_id = $_SESSION['user_id'];
-    // plan_turu olarak güncellendi
+    // plan_turu olarak güncelle
     $plan = $_POST['plan_turu'] ?? ''; 
 
     $dosya_yolu = null;
 
-    // PLAN KONTROLÜ (Formdaki 'yetiskin' değeri ile eşleşmesi için güncellendi)
+    // plan kontrolü
     $gecerli_planlar = ['bireysel', 'ogrenci', 'yetiskin', 'kurumsal'];
 
     if (!in_array($plan, $gecerli_planlar)) {
         die("Geçersiz plan seçildi.");
     }
 
-    // ÖĞRENCİ BELGESİ YÜKLEME
+    // öğrenci belgesi yükleme
     if ($plan == 'ogrenci') {
-        // ogrenci_belgesi olarak güncellendi
+        // ogrenci_belgesi olarak güncelle
         if (!isset($_FILES['ogrenci_belgesi'])) {
             die("Öğrenci belgesi yüklenmedi.");
         }
@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $hedef_klasor = "uploads/belgeler/";
 
-        // Klasör yoksa oluştur
+        // klasör yoksa oluştur
         if (!file_exists($hedef_klasor)) {
             mkdir($hedef_klasor, 0777, true);
         }
@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     try {
 
-        // PREMIUM BAŞVURUSU OLUŞTUR
+        // premium başvurusu oluştur
         $sorgu = $conn->prepare("
             INSERT INTO premium_basvurulari 
             (user_id, plan_tipi, ogrenci_belgesi, durum) 
@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $dosya_yolu
         ]);
 
-        // KULLANICIYI PREMIUM YAP
+        // kullanıcıyı premium yap
         $premium_yap = $conn->prepare("
             UPDATE kullanicilar
             SET is_premium = 1
@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $premium_yap->execute([$user_id]);
 
-        // ÖDEME SAYFASINA YÖNLENDİR
+        // ödeme sayfasına yönlendir
         header("Location: odeme_sayfasi.php?plan=" . urlencode($plan));
         exit();
 
@@ -107,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 } else {
 
-    // Direkt erişim engeli
+    // direkt erişim engeli
     header("Location: premium_planlar.php");
     exit();
 }

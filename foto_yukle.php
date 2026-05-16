@@ -23,6 +23,7 @@ $user = $kontrol->fetch(PDO::FETCH_ASSOC);
 if($user['is_premium'] != 1){
     exit("Premium gerekli.");
 }
+// premium kullanıcıların gelişim fotoğraflarını yükleyebilmesi için
 
 if(isset($_FILES['gelisim_foto'])){
 

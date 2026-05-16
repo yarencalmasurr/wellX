@@ -6,12 +6,12 @@ if (!isset($_SESSION['user_id'])) { header("Location: index.php"); exit(); }
 
 $user_id = $_SESSION['user_id'];
 
-// --- PREMIUM KONTROLÜ (Sidebar uyumluluğu için eklendi) ---
+// premium kontrolü
 $user_sorgu = $conn->prepare("SELECT is_premium FROM kullanicilar WHERE id = ?");
 $user_sorgu->execute([$user_id]);
 $is_premium = $user_sorgu->fetchColumn() ?? 0;
 
-// Turnuva verilerini View üzerinden çekiyoruz
+// turnuva verilerini çek
 $sorgu = $conn->prepare("SELECT * FROM turnuva_puan_durumu LIMIT 15");
 $sorgu->execute();
 $siralamalar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
@@ -39,7 +39,7 @@ $siralamalar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
         body { font-family: 'Poppins', sans-serif; margin: 0; display: flex; color: var(--text-main); background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%); background-attachment: fixed; min-height: 100vh; }
         #particles-js { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; pointer-events: none; }
         
-        /* Modern Sidebar */
+        
         .sidebar { width: 260px; height: 100vh; padding: 30px 20px; position: fixed; z-index: 100; background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px); border-right: 1px solid var(--glass-border); box-shadow: 10px 0 30px rgba(0,0,0,0.03); display: flex; flex-direction: column; }
         .sidebar h2 { font-size: 28px; font-weight: 800; color: #111827; margin-bottom: 10px; letter-spacing: -1px; display: flex; align-items: center; gap: 10px;}
         .sidebar h2 i { color: #ef4444; filter: drop-shadow(0 0 8px rgba(239,68,68,0.4)); }
@@ -59,7 +59,7 @@ $siralamalar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
         .menu-item:nth-of-type(8) i { color: #6366f1; }
         .sidebar .logout-btn { margin-top: auto !important; background: rgba(254, 226, 226, 0.6); color: #ef4444 !important; font-weight: 600; }
 
-        /* Main Content */
+       
         .main { margin-left: 260px; padding: 40px 50px; width: calc(100% - 260px); position: relative; z-index: 10; box-sizing: border-box;}
         
         .page-header { display: flex; align-items: center; gap: 15px; margin-bottom: 40px; }
@@ -67,27 +67,27 @@ $siralamalar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
         .page-header h1 { font-size: 32px; font-weight: 800; margin: 0; letter-spacing: -1px; color: #0f172a;}
         .page-header p { margin: 0; color: var(--text-muted); font-size: 15px; font-weight: 500;}
 
-        /* Turnuva Glass Container */
+        
         .leaderboard-container { 
             background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-radius: 24px; border: 1px solid var(--glass-border); padding: 35px; box-shadow: 0 15px 35px rgba(0,0,0,0.03); 
         }
         
-        /* Satır Tasarımı */
+        
         .user-row { 
             display: flex; align-items: center; padding: 15px 25px; margin-bottom: 12px; border-radius: 18px; 
             background: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.9); transition: 0.3s;
         }
         .user-row:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 10px 20px rgba(0,0,0,0.04); background: white; }
         
-        /* Geçerli Kullanıcı (Sen) Vurgusu */
+        /* sen vurgusu tasarımı */
         .current-user { 
             background: rgba(219, 234, 254, 0.6) !important; 
             border: 2px solid var(--blue) !important; 
             box-shadow: 0 8px 20px rgba(59,130,246,0.15) !important; 
         }
 
-        /* Sıra Halkaları (Madalyalar) */
+        
         .rank-circle {
             width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
             font-weight: 800; margin-right: 20px; font-size: 16px; flex-shrink: 0;
@@ -98,7 +98,7 @@ $siralamalar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
         .third { background: linear-gradient(135deg, #fdba74, #ea580c); color: white; box-shadow: 0 5px 15px rgba(234,88,12,0.3); border:none; }
         .others { background: rgba(255,255,255,0.8); color: var(--text-muted); border: 1px solid #e2e8f0; }
 
-        /* XP Rozeti */
+        /* xp rozeti tasarımı */
         .xp-badge { 
             background: linear-gradient(135deg, var(--blue), #2563eb); color: white; 
             padding: 10px 20px; border-radius: 14px; font-weight: 700; font-size: 15px; 

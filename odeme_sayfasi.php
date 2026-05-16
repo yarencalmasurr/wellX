@@ -1,6 +1,6 @@
 <?php
 session_start();
-// Seçilen planı URL'den güvenli bir şekilde alıyoruz
+// seçilen planı urlden alıyoruz
 $plan = isset($_GET['plan']) ? htmlspecialchars($_GET['plan']) : 'yetişkin';
 $fiyat = ($plan == 'ogrenci') ? '49.90' : '99.90';
 ?>
@@ -110,7 +110,7 @@ $fiyat = ($plan == 'ogrenci') ? '49.90' : '99.90';
     <p class="text-muted"><strong><?php echo ucfirst($plan); ?> Planı</strong> ödemesini güvenle tamamlayın.</p>
     
     <form action="onay_sayfasi.php" method="POST">
-        <!-- Plan bilgisini gizli olarak gönderiyoruz -->
+        <!-- plan bilgisini gizli olarak gönderiyoruz -->
         <input type="hidden" name="secilen_plan" value="<?php echo $plan; ?>">
         
         <input type="text" placeholder="Kart Üzerindeki İsim" class="card-input" required>
