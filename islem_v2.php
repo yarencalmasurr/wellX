@@ -192,15 +192,49 @@ try {
     }
 
     // ---  ADMIN BAŞVURU ONAY/RED ---
+    
     elseif ($is == 'onayla') {
-        $conn->prepare("UPDATE uzman_basvurulari SET durum = 'onaylandi' WHERE id = ?")->execute([$_GET['id']]);
-        header("Location: basvuru_yonetim.php?durum=onaylandi");
-        exit();
-    }
-    elseif ($is == 'reddet') {
-        $conn->prepare("UPDATE uzman_basvurulari SET durum = 'reddedildi' WHERE id = ?")->execute([$_GET['id']]);
-        header("Location: basvuru_yonetim.php?durum=reddedildi");
-        exit();
+        $id = $_GET['id'];
+        
+        //  Başvuru bilgilerini kontrol et
+        $sorgu = $conn->prepare("SELECT * FROM uzman_basvurulari WHERE id = ?");
+        $sorgu->execute([$id]);
+        $basvuru = $sorgu->fetch(PDO::FETCH_ASSOC);
+
+        if ($basvuru && $basvuru['durum'] == 'beklemede') {
+            // 2. Otomatik kullanıcı adı ve şifre oluştur
+            $temiz_isim = strtolower(str_replace(' ', '', $basvuru['ad_soyad']));
+            $yeni_kadi  = $temiz_isim . rand(10, 99);
+            $yeni_sifre = rand(100000, 999999); // 6 haneli rastgele güvenli şifre
+            
+            // Hoca mı Diyetisyen mi?
+            $rol = (strpos(strtolower($basvuru['uzmanlik']), 'hoca') !== false) ? 'hoca' : 'diyetisyen';
+
+            try {
+                // ACID Kuralları - Transaction Başlat
+                $conn->beginTransaction();
+
+                //  Gerçek kullanıcılar tablosuna ekle
+                $ins = $conn->prepare("INSERT INTO kullanicilar (ad_soyad, kullanici_adi, email, sifre, rol) VALUES (?, ?, ?, ?, ?)");
+                $ins->execute([$basvuru['ad_soyad'], $yeni_kadi, $basvuru['email'], $yeni_sifre, $rol]);
+
+                // Başvuruyu onaylandı yap
+                $upd = $conn->prepare("UPDATE uzman_basvurulari SET durum = 'onaylandi' WHERE id = ?");
+                $upd->execute([$id]);
+
+                $conn->commit();
+
+                //  Admine bilgileri ekranda göster
+                echo "<script>
+                        alert('Onay Başarılı!\\n\\nUzman için hesap oluşturuldu.\\n\\nKullanıcı Adı: $yeni_kadi\\nGeçici Şifre: $yeni_sifre\\n\\nLütfen bu bilgileri uzmana iletin.');
+                        window.location.href='basvuru_yonetim.php';
+                      </script>";
+                exit();
+            } catch (Exception $e) { 
+                $conn->rollBack(); 
+                die("Kayıt Hatası: " . $e->getMessage()); 
+            }
+        }
     }
 
     // ---  PROFİL GÜNCELLEME ---
