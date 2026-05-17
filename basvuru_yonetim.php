@@ -2,7 +2,7 @@
 session_start();
 include 'baglan.php';
 
-// kullanıcının giriş yapıp yapmadığı ve admin yetkisine sahip olup olmadığı kontrol ediliyor
+// kullanıcının giriş yapıp yapmadığı ve admin yetkisine sahip olup olmadığı kontrol ediliyor. BU satır sayesinde güvenlik açığı önleniyor.
 if (!isset($_SESSION['user_id']) || $_SESSION['rol'] != 'admin') {
     header("Location: index.php");
     exit();
@@ -28,7 +28,7 @@ try {
 }
 ?>
 
-<!-- admin paneli arayüz tasarımı ve yönetim sayfası stilleri -->
+<!-- admin paneli ve  yönetim sayfası stilleri -->
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -157,7 +157,7 @@ try {
         <?php if($bekleyenler): ?>
             <?php foreach($bekleyenler as $b): ?>
                 <?php 
-                    // uzmanlık alanı rollerini ayrıştırma
+                    // uzmanlık alanı rollerini ayrıştırma arayüz burda veriye göre şekilleniyor.
                     $rol_badge = (strpos(strtolower($b['uzmanlik']), 'hoca') !== false) ? 'badge-hoca' : 'badge-diyet';
                 ?>
                 <div class="app-card">

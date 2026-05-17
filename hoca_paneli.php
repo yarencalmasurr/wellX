@@ -12,7 +12,7 @@ $bugun = date('Y-m-d');
 $son_duyuru = null;
 
 try {
-    // 1. Danışanları Çek ve Bugünkü Spor Günlüğünü Getir
+    //  Danışanları ve Bugünkü Spor Günlüğünü Getir
     $sorgu = $conn->prepare("
         SELECT k.id, k.ad_soyad, k.email,
         (SELECT SUM(spor_suresi) FROM aktivite_kayitlari WHERE user_id = k.id AND kayit_tarihi = ?) as bugunku_spor,
@@ -26,7 +26,7 @@ try {
     $sorgu->execute([$bugun, $bugun, $hoca_id]);
     $danisanlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2. Bekleyen Soruları Çek
+    //  Bekleyen Sorular
     $soru_sorgu = $conn->prepare("
         SELECT us.*, k.ad_soyad as danisan_adi 
         FROM uzman_sorulari us 
@@ -37,7 +37,7 @@ try {
     $soru_sorgu->execute([$hoca_id]);
     $gelen_sorular = $soru_sorgu->fetchAll(PDO::FETCH_ASSOC);
 
-    // 3. Geçmiş Duyuruları Çek (Son 5 Duyuru)
+    //  Geçmiş Duyurular
     $duyuru_sorgu = $conn->prepare("SELECT * FROM gunun_antrenmani WHERE hoca_id = ? ORDER BY id DESC LIMIT 5");
     $duyuru_sorgu->execute([$hoca_id]);
     $gecmis_duyurular = $duyuru_sorgu->fetchAll(PDO::FETCH_ASSOC);

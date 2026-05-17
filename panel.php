@@ -55,12 +55,13 @@ $yeni_egzersiz = $bildirim_egzersiz->fetch();
 // günün antrenmanı
 $genel_antrenman_sorgu = $conn->query("SELECT * FROM gunun_antrenmani WHERE DATE(ekleme_tarihi) = CURDATE() ORDER BY id DESC LIMIT 1");
 $genel_antrenman = $genel_antrenman_sorgu->fetch(PDO::FETCH_ASSOC);
-// günün tarifi
+
+// günün tarifi - Sadece bugünün takvim gününe ait olanı çekecek şekilde düzeltildi
 $tarif_sorgu = $conn->prepare("
     SELECT t.*, k.ad_soyad 
     FROM gunun_tarifi t 
     JOIN kullanicilar k ON t.diyetisyen_id = k.id 
-    WHERE t.ekleme_tarihi >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+    WHERE DATE(t.ekleme_tarihi) = CURDATE()
     ORDER BY t.id DESC LIMIT 1
 ");
 $tarif_sorgu->execute();
@@ -524,7 +525,7 @@ $mevcut_kayit = $kontrol->fetch();
       </div>
       <div class="modal-body p-4 text-center">
         <div style="font-size: 54px; color: #f59e0b; margin-bottom: 15px;"><i class="fas fa-star"></i></div>
-        <p style="color: var(--text-main); font-size: 16px; font-weight:500; line-height:1.6;">Uzmanlarınızla birebir iletişim kurun, fotoğraf yükleyin ve size özel gelişim grafiklerine erişin.</p>
+        <p style="color: var(--text-main); font-size: 16px; font-weight:500; line-height:1.6;">Uzmanlarınızla birebir iletişim kurun, fotoğraf yükleyinและ size özel gelişim grafiklerine erişin.</p>
         <a href="premium_planlar.php" class="btn" style="background: var(--text-main); color:white; padding: 14px 28px; border-radius: 14px; text-decoration:none; display:inline-block; margin-top: 15px; font-weight:600; transition:0.3s;">Planları İncele</a>
       </div>
     </div>
@@ -564,7 +565,7 @@ $mevcut_kayit = $kontrol->fetch();
                  <option value="Haşlanmış Yumurta" data-kal="75" data-birim="Adet">Haşlanmış Yumurta (1 Adet - 75 kcal)</option>
                  <option value="Zeytin" data-kal="5" data-birim="Adet">Zeytin (1 Adet - 5 kcal)</option>
                  <option value="Beyaz Peynir" data-kal="90" data-birim="İnce Dilim">Beyaz Peynir (1 İnce Dilim - 90 kcal)</option>
-                 <option value="Tam Buğday Ekmek" data-kal="65" data-birim="Dilim">Tam Buğday Ekmek (1 Dilim - 65 kcal)</option>
+                 <option value="Tam Buğday Ekmek" data-kal="65" data-dilim="Dilim">Tam Buğday Ekmek (1 Dilim - 65 kcal)</option>
                  <option value="Yulaf Ezmesi" data-kal="30" data-birim="Yemek Kaşığı">Yulaf Ezmesi (1 Yemek Kaşığı - 30 kcal)</option>
              </optgroup>
 

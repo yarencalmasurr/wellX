@@ -54,7 +54,7 @@ try {
         exit();
     }
 
-    // --- 3. DANIŞAN KAYIT ---
+    // ---  DANIŞAN KAYIT ---
     elseif ($is == 'kayit_ol') {
         $ad_soyad = $_POST['ad_soyad'];
         $kadi = $_POST['kullanici_adi'];
@@ -67,7 +67,7 @@ try {
         exit();
     }
 
-    // --- 4. VERİLERİ KAYDET (DANIŞAN PANELİ - SINIRSIZ EKLEME MANTIĞI) ---
+    // ---  VERİLERİ KAYDET (DANIŞAN PANELİ - SINIRSIZ EKLEME MANTIĞI) ---
     elseif ($is == 'verileri_kaydet') {
         $user_id = $_SESSION['user_id'];
         $su      = (float)$_POST['su_miktari'];
@@ -78,13 +78,13 @@ try {
         $kilo    = (float)$_POST['guncel_kilo'];
         $tarih   = date('Y-m-d');
 
-        // Mevcut verileri çek (Uyku dahil edildi)
+        // Mevcut veriler
         $kontrol = $conn->prepare("SELECT id, su_miktari, alinan_kalori, spor_suresi, yakilan_kalori, uyku_suresi FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
         $kontrol->execute([$user_id, $tarih]);
         $mevcut_kayit = $kontrol->fetch(PDO::FETCH_ASSOC);
 
         if ($mevcut_kayit) {
-            // Kayıt VAR ise üzerine ekleyerek güncelle (Kilo hariç)
+            // Kayıt VAR ise üzerine ekleyerek güncelle 
             $yeni_su = $mevcut_kayit['su_miktari'] + $su;
             $yeni_alinan = $mevcut_kayit['alinan_kalori'] + $alinan;
             $yeni_spor = $mevcut_kayit['spor_suresi'] + $spor;
@@ -113,7 +113,7 @@ try {
             $toplam_uyku_kontrol = $uyku;
         }
 
-        // Rozet Kontrolü (Hata Giderildi: Üst üste binen rozetler artık tek bildirimde çıkacak)
+        // Rozet Kontrolü 
         $yeni_rozet = "";
 
         if(file_exists('rozet_fonksiyonu.php')) {
@@ -141,7 +141,7 @@ try {
         exit();
     }
 
-    // --- 5. UZMAN ATAMA (DANIŞANIN UZMAN SEÇMESİ) ---
+    // ---  DANIŞANIN UZMAN SEÇMESİ  ---
     elseif ($is == 'uzman_atama') {
         $danisan_id = $_SESSION['user_id'];
         $uzman_id = $_GET['uzman_id'];
@@ -156,7 +156,7 @@ try {
         exit();
     }
 
-    // --- 6. UZMANIN KİŞİYE ÖZEL PLAN YAZMASI ---
+    // ---  UZMANIN KİŞİYE ÖZEL PLAN YAZMASI ---
     elseif ($is == 'plan_yaz' || $is == 'egzersiz_yaz') {
         $uzman_id = $_SESSION['user_id'];
         $danisan_id = $_POST['danisan_id'];
@@ -173,7 +173,7 @@ try {
         exit();
     }
 
-    // --- 7. TARİFE PUAN VERME ---
+    // ---  TARİFE PUAN VERME ---
     elseif ($is == 'puan_ver') {
         $user_id = $_SESSION['user_id'];
         $tarif_id = $_POST['tarif_id'];
@@ -191,7 +191,7 @@ try {
         exit();
     }
 
-    // --- 8. ADMIN BAŞVURU ONAY/RED ---
+    // ---  ADMIN BAŞVURU ONAY/RED ---
     elseif ($is == 'onayla') {
         $conn->prepare("UPDATE uzman_basvurulari SET durum = 'onaylandi' WHERE id = ?")->execute([$_GET['id']]);
         header("Location: basvuru_yonetim.php?durum=onaylandi");
@@ -203,7 +203,7 @@ try {
         exit();
     }
 
-    // --- 9. PROFİL GÜNCELLEME ---
+    // ---  PROFİL GÜNCELLEME ---
     elseif ($is == 'profil_guncelle') {
         $user_id = $_SESSION['user_id'];
         $ad_soyad = $_POST['ad_soyad'];
@@ -222,7 +222,7 @@ try {
         exit();
     }
 
-    // --- 10. PREMIUM: UZMANA SORU SORMA ---
+    // ---  PREMIUM: UZMANA SORU SORMA ---
     elseif ($is == 'soru_sor') {
         $danisan_id = $_SESSION['user_id'];
         $uzman_id = $_POST['uzman_id'];
@@ -237,7 +237,7 @@ try {
         exit();
     }
 
-    // --- 11. UZMAN: SORUYU CEVAPLAMA ---
+    // ---  UZMAN: SORUYU CEVAPLAMA ---
     elseif ($is == 'cevapla') {
         $soru_id = $_POST['soru_id'];
         $cevap = $_POST['cevap_metni'];
@@ -254,7 +254,7 @@ try {
         exit();
     }
 
-    // --- 12. GÜNÜN TARİFİNİ PAYLAŞ (DİYETİSYEN) ---
+    // ---  GÜNÜN TARİFİNİ PAYLAŞ (DİYETİSYEN) ---
     elseif ($is == 'tarif_paylas') {
         $diyetisyen_id = $_SESSION['user_id'];
         $baslik = $_POST['tarif_baslik'];
@@ -266,7 +266,7 @@ try {
         exit();
     }
 
-    // --- 13. GÜNÜN ANTRENMANINI PAYLAŞ (HOCA DUYURUSU) ---
+    // --- 13. GÜNÜN ANTRENMANINI PAYLAŞ (HOCA) ---
     elseif ($is == 'antrenman_paylas' || $is == 'antrenman_duyuru_kaydet') {
         $hoca_id = $_SESSION['user_id'];
         
@@ -352,7 +352,7 @@ try {
         exit();
     }
 
-    // --- 17. YEMEK EKLEME İŞLEMİ (BESLENME GÜNLÜĞÜ) ---
+    // ---  YEMEK EKLEME  ---
     elseif ($is == 'yemek_ekle') {
         $user_id = $_SESSION['user_id'];
         $tarih = date('Y-m-d');
@@ -397,7 +397,7 @@ try {
         }
     }
 
-    // --- 18. EGZERSİZ EKLEME İŞLEMİ (EGZERSİZ GÜNLÜĞÜ) ---
+    // ---  EGZERSİZ EKLEME  ---
     elseif ($is == 'egzersiz_ekle') {
         $user_id = $_SESSION['user_id'];
         $tarih = date('Y-m-d');
@@ -406,11 +406,11 @@ try {
         $sure_dk = $_POST['sure_dk'];
         $yakilan_kalori = $_POST['yakilan_kalori'];
 
-        // 1. Veriyi Egzersiz Günlüğüne Ekle
+        //  Veriyi Egzersiz Günlüğüne Ekle
         $spor_kaydet = $conn->prepare("INSERT INTO egzersiz_gunlugu (user_id, tarih, egzersiz_adi, sure_dk, yakilan_kalori) VALUES (?, ?, ?, ?, ?)");
         $spor_kaydet->execute([$user_id, $tarih, $egzersiz_adi, $sure_dk, $yakilan_kalori]);
 
-        // 2. Ana Tablodaki Toplam Süre ve Yakılan Kaloriyi Güncelle
+        //  Ana Tablodaki Toplam Süre ve Yakılan Kaloriyi Güncelle
         $kontrol = $conn->prepare("SELECT id, spor_suresi FROM aktivite_kayitlari WHERE user_id = ? AND kayit_tarihi = ?");
         $kontrol->execute([$user_id, $tarih]);
         $mevcut = $kontrol->fetch(PDO::FETCH_ASSOC);
@@ -428,7 +428,7 @@ try {
             $yeni_kayit->execute([$user_id, $tarih, $yakilan_kalori, $sure_dk]);
         }
 
-        // YENİ EKLENEN KISIM: Egzersiz eklenince spor rozeti kontrol edilsin!
+        //  Egzersiz eklenince spor rozeti kontrol edilsin!
         $yeni_rozet = "";
         if(file_exists('rozet_fonksiyonu.php')) {
             include_once 'rozet_fonksiyonu.php';

@@ -9,7 +9,7 @@ ini_set('display_errors', 1);
 
 $is = $_GET['is'] ?? '';
 
-// 1. danışan kayıt işlemi
+//  danışan kayıt işlemi
 if ($is == 'danisan_kayit') {
     $ad_soyad = $_POST['ad_soyad'] ?? '';
     $kadi     = $_POST['kullanici'] ?? '';
@@ -41,7 +41,7 @@ if ($is == 'danisan_kayit') {
     }
 }
 
-// 2. uzman başvuru kaydı
+// uzman başvuru kaydı
 elseif ($is == 'uzman_kayit' || $is == 'hoca_kayit') {
     $ad_soyad = $_POST['ad_soyad'] ?? '';
     $email    = $_POST['email']    ?? '';
@@ -64,7 +64,7 @@ elseif ($is == 'uzman_kayit' || $is == 'hoca_kayit') {
     }
 }
 
-// 3. uzman onaylama ve otomatik kullanıcı oluşturma
+//  uzman onaylama ve otomatik kullanıcı oluşturma
 elseif ($is == 'onayla') {
     $bid = $_GET['id'] ?? 0;
 
@@ -101,7 +101,7 @@ elseif ($is == 'onayla') {
 }
 
 
-// 4. giriş işlemi
+//  giriş işlemi
 elseif ($is == 'login') {
     $kadi  = $_POST['kullanici'] ?? '';
     $sifre = $_POST['sifre']     ?? '';

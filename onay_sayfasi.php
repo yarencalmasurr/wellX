@@ -5,7 +5,7 @@ include 'baglan.php';
 // kullanıcı id alalım
 $user_id = $_SESSION['user_id'];
 
-// 1. Veritabanında kullanıcıyı premium yapalım
+//  Veritabanında kullanıcıyı premium yapalım
 
 $guncelle = $conn->prepare("UPDATE kullanicilar SET is_premium = 1 WHERE id = ?");
 $sonuc = $guncelle->execute([$user_id]);

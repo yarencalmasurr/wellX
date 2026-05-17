@@ -36,7 +36,7 @@ if(isset($_FILES['gelisim_foto'])){
     if(!in_array($uzanti, $izinli)){
         exit("Geçersiz dosya.");
     }
-
+// aynı isimde iki fotoğraf olursa diğeri silineceği için rastgele bir sayıyıla birleştirilir.
     $yeni_ad = time() . "_" . rand(1000,9999) . "." . $uzanti;
 
     $hedef = $yeni_ad;

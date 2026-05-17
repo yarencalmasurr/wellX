@@ -12,7 +12,7 @@ $diyetisyen_id = $_SESSION['user_id'];
 $bugun = date('Y-m-d');
 
 try {
-    // 1. Aktif Danışanları ve Bugün Yedikleri Yemekleri Çek
+    // 1. Aktif Danışanları ve Bugün Yedikleri Yemekler
     $sorgu = $conn->prepare("
         SELECT k.id, k.ad_soyad, k.email, 
         (SELECT SUM(alinan_kalori) FROM aktivite_kayitlari WHERE user_id = k.id AND kayit_tarihi = ?) as bugunku_kalori,
@@ -27,7 +27,7 @@ try {
     $sorgu->execute([$bugun, $bugun, $diyetisyen_id]);
     $danisanlar = $sorgu->fetchAll(PDO::FETCH_ASSOC);
     
-    // 2. Geçmiş Tarif İstatistiklerini Çek (Son 5 Tarif)
+    //  Geçmiş Tarif İstatistikleri
     $istatistik_sorgu = $conn->prepare("
         SELECT t.tarif_baslik, t.ekleme_tarihi, 
                COALESCE(AVG(p.puan), 0) as ort_puan, 
@@ -41,7 +41,7 @@ try {
     $istatistik_sorgu->execute([$diyetisyen_id]);
     $tarifler = $istatistik_sorgu->fetchAll(PDO::FETCH_ASSOC);
 
-    // 3. Gelen Soruları Çek
+    //  Gelen Sorular
     $soru_sorgu = $conn->prepare("
         SELECT us.*, k.ad_soyad as danisan_adi 
         FROM uzman_sorulari us 

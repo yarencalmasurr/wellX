@@ -5,18 +5,18 @@ include 'baglan.php';
 if (!isset($_SESSION['user_id'])) { header("Location: index.php"); exit(); }
 $user_id = $_SESSION['user_id'];
 
-//1. premium kontrolü 
+// premium kontrolü 
 $user_sorgu = $conn->prepare("SELECT is_premium, ad_soyad FROM kullanicilar WHERE id = ?");
 $user_sorgu->execute([$user_id]);
 $user_data = $user_sorgu->fetch(PDO::FETCH_ASSOC);
 $is_premium = $user_data['is_premium'] ?? 0;
 
-//2. tarihe göre fotoğrafları çek
+// tarihe göre fotoğraflar
 $foto_sorgu = $conn->prepare("SELECT * FROM gelisim_fotograflari WHERE user_id = ? ORDER BY yuklenme_tarihi DESC");
 $foto_sorgu->execute([$user_id]);
 $fotograflar = $foto_sorgu->fetchAll(PDO::FETCH_ASSOC);
 
-//3. grafik verilerini çek
+// grafik verileri kronolojik olarak sıralanır
 $sorgu = $conn->prepare("SELECT * FROM aktivite_kayitlari WHERE user_id = ? ORDER BY kayit_tarihi DESC LIMIT 10");
 $sorgu->execute([$user_id]);
 $veriler = array_reverse($sorgu->fetchAll(PDO::FETCH_ASSOC));
